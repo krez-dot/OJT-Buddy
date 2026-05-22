@@ -9,6 +9,7 @@ import Logbook from './pages/Logbook';
 import Documents from './pages/Documents';
 import InterviewPrep from './pages/InterviewPrep';
 import BatchShare from './pages/BatchShare';
+import Profile from './pages/Profile';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
       <Route path="/interview" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
       <Route path="/shares" element={<PrivateRoute><BatchShare /></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
   );

@@ -8,6 +8,7 @@ const navItems = [
   { to: '/documents', label: 'Documents', icon: '📄' },
   { to: '/interview', label: 'Interview Prep', icon: '🎤' },
   { to: '/shares', label: 'Batch Share', icon: '🌐' },
+  { to: '/profile', label: 'Profile', icon: '⚙️' },
 ];
 
 export default function Layout({ children }) {

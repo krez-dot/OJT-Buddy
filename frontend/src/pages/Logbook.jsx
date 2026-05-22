@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 import { getLogbook, getLogbookStats, saveLogEntry, deleteLogEntry } from '../api';
 
 const MOODS = [
@@ -52,6 +53,36 @@ export default function Logbook() {
     }
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('OJT Logbook', 14, 20);
+    doc.setFontSize(11);
+    doc.text(`Total Hours: ${totalHours.toFixed(1)} / ${requiredHours}h`, 14, 30);
+    doc.text(`Days Logged: ${stats?.total_days || 0}`, 14, 37);
+
+    let y = 50;
+    entries.forEach((e) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      const date = new Date(e.entry_date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${date} — ${e.hours_rendered}h`, 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      if (e.location) { doc.text(`Location: ${e.location}`, 14, y); y += 5; }
+      if (e.tasks_done) {
+        const lines = doc.splitTextToSize(e.tasks_done, 180);
+        doc.text(lines, 14, y);
+        y += lines.length * 5;
+      }
+      y += 6;
+    });
+
+    doc.save('ojt-logbook.pdf');
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return;
     await deleteLogEntry(id);
@@ -73,7 +104,10 @@ export default function Logbook() {
           <h1>Logbook</h1>
           <p className="page-subtitle">Track your daily OJT hours</p>
         </div>
-        <button className="btn-primary" onClick={() => openForm()}>+ Log Today</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {entries.length > 0 && <button className="btn-ghost" onClick={exportPDF}>Export PDF</button>}
+          <button className="btn-primary" onClick={() => openForm()}>+ Log Today</button>
+        </div>
       </div>
 
       <div className="logbook-stats">
