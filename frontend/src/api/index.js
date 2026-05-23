@@ -55,5 +55,6 @@ export const aiLogbookHelper = (data) => api.post('/ai/logbook-helper', data);
 export const aiCompanyResearch = (data) => api.post('/ai/company-research', data);
 export const aiSuggestCompanies = (data) => api.post('/ai/suggest-companies', data);
 export const aiResumeSummary = (data) => api.post('/ai/resume-summary', data);
+export const aiChat = (data) => api.post('/ai/chat', data);
 
 export default api;

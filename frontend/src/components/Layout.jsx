@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getLogbookStats } from '../api';
+import AiChat from './AiChat';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard',     Icon: LayoutDashboard },
@@ -156,6 +157,7 @@ export default function Layout({ children }) {
         </div>
         {children}
       </div>
+      <AiChat />
     </div>
   );
 }

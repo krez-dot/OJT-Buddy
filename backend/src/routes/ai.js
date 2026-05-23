@@ -84,6 +84,34 @@ router.post('/company-research', auth, async (req, res) => {
   }
 });
 
+// POST /api/ai/chat
+router.post('/chat', auth, async (req, res) => {
+  const { messages } = req.body;
+  if (!messages?.length) return res.status(400).json({ error: 'messages are required' });
+
+  try {
+    const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+    const result = await groq.chat.completions.create({
+      model: MODEL,
+      temperature: 0.7,
+      max_tokens: 512,
+      messages: [
+        {
+          role: 'system',
+          content: `You are OJT Buddy AI, a helpful assistant for Filipino IT students doing their On-the-Job Training (OJT).
+You help with: finding companies, writing logbook entries, interview preparation, document requirements, and general OJT advice.
+Be friendly, concise, and practical. Use casual but professional language. Keep responses under 150 words unless asked for more.
+You are embedded in the OJT Buddy app.`,
+        },
+        ...history,
+      ],
+    });
+    res.json({ reply: result.choices[0].message.content.trim() });
+  } catch (err) {
+    res.status(500).json({ error: 'AI request failed', detail: err.message });
+  }
+});
+
 // POST /api/ai/suggest-companies
 router.post('/suggest-companies', auth, async (req, res) => {
   const { course, skills, location } = req.body;
