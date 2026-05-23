@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCompanies, getDocTypes, getCompanyDocs, addCompanyDoc, updateDoc } from '../api';
+import { SkeletonList } from '../components/Skeleton';
 
 const STATUS_OPTIONS = ['pending', 'prepared', 'submitted'];
 const STATUS_COLORS = { pending: '#94a3b8', prepared: '#f59e0b', submitted: '#22c55e' };
@@ -47,7 +48,12 @@ export default function Documents() {
     setDocs(docs.map((d) => d.id === doc.id ? { ...d, notes } : d));
   };
 
-  if (loading) return <div className="page-loading">Loading...</div>;
+  if (loading) return (
+    <div className="page">
+      <div className="page-header"><div className="skeleton" style={{height:'24px',width:'130px',borderRadius:'6px'}} /></div>
+      <div className="docs-layout"><SkeletonList rows={2} /><SkeletonList rows={4} /></div>
+    </div>
+  );
 
   const submitted = docs.filter((d) => d.status === 'submitted').length;
   const total = docs.length;

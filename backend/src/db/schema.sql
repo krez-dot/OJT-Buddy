@@ -92,6 +92,14 @@ CREATE TABLE batch_shares (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS company_status_history (
+  id SERIAL PRIMARY KEY,
+  company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE,
+  status VARCHAR(20),
+  note TEXT,
+  changed_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Default interview questions
 INSERT INTO interview_questions (question, sample_answer, category, is_default) VALUES
   ('Tell me about yourself.', 'Start with your name, course, year, and key skills. Mention a notable project briefly.', 'General', TRUE),

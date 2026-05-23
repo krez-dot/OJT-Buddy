@@ -48,4 +48,17 @@ router.post('/questions', auth, async (req, res) => {
   }
 });
 
+router.delete('/questions/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query(
+      'DELETE FROM interview_questions WHERE id=$1 AND user_id=$2 AND is_default=FALSE RETURNING id',
+      [req.params.id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(403).json({ error: 'Cannot delete default questions' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

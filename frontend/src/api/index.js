@@ -21,6 +21,7 @@ export const getCompanies = () => api.get('/companies');
 export const createCompany = (data) => api.post('/companies', data);
 export const updateCompany = (id, data) => api.put(`/companies/${id}`, data);
 export const deleteCompany = (id) => api.delete(`/companies/${id}`);
+export const getCompanyHistory = (id) => api.get(`/companies/${id}/history`);
 
 // Documents
 export const getDocTypes = () => api.get('/documents/types');
@@ -31,16 +32,26 @@ export const updateDoc = (id, data) => api.put(`/documents/${id}`, data);
 // Logbook
 export const getLogbook = () => api.get('/logbook');
 export const getLogbookStats = () => api.get('/logbook/stats');
+export const getWeeklyHours = () => api.get('/logbook/weekly');
 export const saveLogEntry = (data) => api.post('/logbook', data);
+export const updateLogEntry = (id, data) => api.put(`/logbook/${id}`, data);
 export const deleteLogEntry = (id) => api.delete(`/logbook/${id}`);
 
 // Interview
 export const getQuestions = () => api.get('/interview/questions');
 export const updateConfidence = (id, confidence) => api.put(`/interview/questions/${id}/confidence`, { confidence });
 export const addQuestion = (data) => api.post('/interview/questions', data);
+export const deleteQuestion = (id) => api.delete(`/interview/questions/${id}`);
 
 // Shares
 export const getShares = () => api.get('/shares');
 export const createShare = (data) => api.post('/shares', data);
+export const updateShare = (id, data) => api.put(`/shares/${id}`, data);
+export const deleteShare = (id) => api.delete(`/shares/${id}`);
+
+// AI
+export const aiInterviewFeedback = (data) => api.post('/ai/interview-feedback', data);
+export const aiLogbookHelper = (data) => api.post('/ai/logbook-helper', data);
+export const aiCompanyResearch = (data) => api.post('/ai/company-research', data);
 
 export default api;

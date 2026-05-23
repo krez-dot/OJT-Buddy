@@ -9,6 +9,7 @@ const documentRoutes = require('./routes/documents');
 const logbookRoutes = require('./routes/logbook');
 const interviewRoutes = require('./routes/interview');
 const shareRoutes = require('./routes/shares');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/logbook', logbookRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/shares', shareRoutes);
+app.use('/api/ai', aiRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

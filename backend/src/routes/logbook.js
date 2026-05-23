@@ -29,6 +29,23 @@ router.get('/stats', auth, async (req, res) => {
   }
 });
 
+router.get('/weekly', auth, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT to_char(date_trunc('week', entry_date), 'Mon DD') AS week,
+              SUM(hours_rendered) AS hours
+       FROM logbook_entries
+       WHERE user_id=$1 AND entry_date >= NOW() - INTERVAL '8 weeks'
+       GROUP BY date_trunc('week', entry_date)
+       ORDER BY date_trunc('week', entry_date)`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/', auth, async (req, res) => {
   const { entry_date, location, tasks_done, mood, hours_rendered } = req.body;
   if (!entry_date) return res.status(400).json({ error: 'entry_date is required' });
@@ -38,6 +55,20 @@ router.post('/', auth, async (req, res) => {
       [req.user.id, entry_date, location, tasks_done, mood, hours_rendered || 0]
     );
     res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  const { entry_date, location, tasks_done, mood, hours_rendered } = req.body;
+  try {
+    const result = await db.query(
+      'UPDATE logbook_entries SET entry_date=$1,location=$2,tasks_done=$3,mood=$4,hours_rendered=$5 WHERE id=$6 AND user_id=$7 RETURNING *',
+      [entry_date, location, tasks_done, mood, hours_rendered || 0, req.params.id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

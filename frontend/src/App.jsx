@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -10,6 +11,7 @@ import Documents from './pages/Documents';
 import InterviewPrep from './pages/InterviewPrep';
 import BatchShare from './pages/BatchShare';
 import Profile from './pages/Profile';
+import Landing from './pages/Landing';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -26,6 +28,7 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
-import { getLogbook, getLogbookStats, saveLogEntry, deleteLogEntry } from '../api';
+import { getLogbook, getLogbookStats, saveLogEntry, updateLogEntry, deleteLogEntry, aiLogbookHelper } from '../api';
+import { useToast } from '../context/ToastContext';
+import { SkeletonStat, SkeletonList } from '../components/Skeleton';
 
 const MOODS = [
   { value: 'great', emoji: '😄', label: 'Great' },
@@ -10,16 +12,21 @@ const MOODS = [
   { value: 'rough', emoji: '😣', label: 'Rough' },
 ];
 
-const TODAY = new Date().toISOString().slice(0, 10);
+const d = new Date();
+const TODAY = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 export default function Logbook() {
   const [entries, setEntries] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [monthFilter, setMonthFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState({ entry_date: TODAY, location: '', tasks_done: '', mood: 'good', hours_rendered: 8 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [aiWriting, setAiWriting] = useState(false);
+  const toast = useToast();
 
   const load = () =>
     Promise.all([getLogbook(), getLogbookStats()])
@@ -32,8 +39,10 @@ export default function Logbook() {
 
   const openForm = (entry = null) => {
     if (entry) {
+      setEditTarget(entry);
       setForm({ entry_date: entry.entry_date.slice(0,10), location: entry.location || '', tasks_done: entry.tasks_done || '', mood: entry.mood || 'good', hours_rendered: entry.hours_rendered });
     } else {
+      setEditTarget(null);
       setForm({ entry_date: TODAY, location: '', tasks_done: '', mood: 'good', hours_rendered: 8 });
     }
     setShowForm(true); setError('');
@@ -43,13 +52,34 @@ export default function Logbook() {
     e.preventDefault();
     setSaving(true); setError('');
     try {
-      await saveLogEntry(form);
+      if (editTarget) {
+        await updateLogEntry(editTarget.id, form);
+      } else {
+        await saveLogEntry(form);
+      }
       await load();
       setShowForm(false);
+      setEditTarget(null);
+      toast(editTarget ? 'Entry updated!' : 'Entry saved!');
     } catch (err) {
-      setError(err.response?.data?.error || 'Save failed');
+      const msg = err.response?.data?.error || 'Save failed';
+      setError(msg);
+      toast(msg, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAiRewrite = async () => {
+    if (!form.tasks_done?.trim()) return;
+    setAiWriting(true);
+    try {
+      const res = await aiLogbookHelper({ notes: form.tasks_done, hours: form.hours_rendered, location: form.location });
+      setForm((f) => ({ ...f, tasks_done: res.data.result }));
+    } catch {
+      // silently fail — user keeps their original text
+    } finally {
+      setAiWriting(false);
     }
   };
 
@@ -91,11 +121,21 @@ export default function Logbook() {
     setStats(res.data);
   };
 
-  if (loading) return <div className="page-loading">Loading...</div>;
+  if (loading) return (
+    <div className="page">
+      <div className="page-header"><div className="skeleton" style={{height:'24px',width:'120px',borderRadius:'6px'}} /></div>
+      <div className="logbook-stats">{Array.from({length:3}).map((_,i) => <SkeletonStat key={i} />)}</div>
+      <SkeletonList rows={5} />
+    </div>
+  );
 
   const totalHours = parseFloat(stats?.total_hours || 0);
   const requiredHours = stats?.required_hours || 486;
   const pct = Math.min(100, Math.round((totalHours / requiredHours) * 100));
+
+  const months = ['all', ...new Set(entries.map((e) => e.entry_date.slice(0, 7)))].reverse();
+  const filtered = monthFilter === 'all' ? entries : entries.filter((e) => e.entry_date.startsWith(monthFilter));
+  const monthLabel = (m) => m === 'all' ? 'All' : new Date(m + '-01').toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
 
   return (
     <div className="page">
@@ -133,7 +173,7 @@ export default function Logbook() {
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Log Entry</h2>
+              <h2>{editTarget ? 'Edit Entry' : 'Log Entry'}</h2>
               <button className="modal-close" onClick={() => setShowForm(false)}>×</button>
             </div>
             <form onSubmit={handleSave} className="modal-form">
@@ -153,8 +193,19 @@ export default function Logbook() {
                 <input value={form.location} onChange={set('location')} placeholder="e.g. Ayala Office, WFH" />
               </div>
               <div className="form-group">
-                <label>Tasks Done</label>
-                <textarea rows={4} value={form.tasks_done} onChange={set('tasks_done')} placeholder="What did you do today?" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                  <label style={{ margin: 0 }}>Tasks Done</label>
+                  <button
+                    type="button"
+                    className="ai-inline-btn"
+                    onClick={handleAiRewrite}
+                    disabled={aiWriting || !form.tasks_done?.trim()}
+                    title="Rewrite with AI"
+                  >
+                    {aiWriting ? '✦ Rewriting...' : '✦ Polish with AI'}
+                  </button>
+                </div>
+                <textarea rows={4} value={form.tasks_done} onChange={set('tasks_done')} placeholder="Rough notes are fine — AI can polish them for you" />
               </div>
               <div className="form-group">
                 <label>Mood</label>
@@ -181,7 +232,20 @@ export default function Logbook() {
         </div>
       )}
 
-      {entries.length === 0 ? (
+      {entries.length > 0 && months.length > 2 && (
+        <div className="filter-tabs" style={{ marginBottom: '16px' }}>
+          {months.map((m) => (
+            <button key={m} className={`filter-tab ${monthFilter === m ? 'active' : ''}`} onClick={() => setMonthFilter(m)}>
+              {monthLabel(m)}
+              <span className="tab-count">
+                {m === 'all' ? entries.length : entries.filter((e) => e.entry_date.startsWith(m)).length}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📓</div>
           <h3>No entries yet</h3>
@@ -190,7 +254,7 @@ export default function Logbook() {
         </div>
       ) : (
         <div className="logbook-list">
-          {entries.map((e) => {
+          {filtered.map((e) => {
             const mood = MOODS.find((m) => m.value === e.mood);
             return (
               <div key={e.id} className="logbook-entry">

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getCompanies, createCompany, updateCompany, deleteCompany } from '../api';
+import { getCompanies, createCompany, updateCompany, deleteCompany, getCompanyHistory, aiCompanyResearch } from '../api';
+import { useToast } from '../context/ToastContext';
+import { SkeletonList } from '../components/Skeleton';
+import { History } from 'lucide-react';
 
 const STATUSES = ['wishlist', 'applied', 'interview', 'accepted', 'rejected'];
 const STATUS_COLORS = { wishlist: '#94a3b8', applied: '#3b82f6', interview: '#f59e0b', accepted: '#22c55e', rejected: '#ef4444' };
@@ -8,6 +11,35 @@ const PRIORITY_COLORS = { high: '#ef4444', normal: '#3b82f6', low: '#94a3b8' };
 
 const EMPTY_FORM = { name: '', address: '', contact_person: '', email: '', phone: '', status: 'wishlist', priority: 'normal', notes: '', applied_at: '', deadline: '' };
 
+function HistoryPanel({ companyId }) {
+  const [logs, setLogs] = useState(null);
+
+  useEffect(() => {
+    getCompanyHistory(companyId).then(r => setLogs(r.data));
+  }, [companyId]);
+
+  if (!logs) return <div className="history-loading">Loading…</div>;
+  if (logs.length === 0) return <p className="history-empty">No status changes recorded yet.</p>;
+
+  return (
+    <div className="history-timeline">
+      {logs.map((l, i) => (
+        <div key={l.id} className="history-item">
+          <div className="history-dot" style={{ background: STATUS_COLORS[l.status] }} />
+          {i < logs.length - 1 && <div className="history-line" />}
+          <div className="history-body">
+            <span className="history-status" style={{ color: STATUS_COLORS[l.status] }}>{l.status}</span>
+            {l.note && <span className="history-note"> — {l.note}</span>}
+            <span className="history-date">
+              {new Date(l.changed_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Companies() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +47,13 @@ export default function Companies() {
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [openHistory, setOpenHistory] = useState(null);
+  const [aiResearch, setAiResearch] = useState({});
+  const [aiResearching, setAiResearching] = useState({});
+  const toast = useToast();
 
   useEffect(() => {
     getCompanies().then((r) => setCompanies(r.data)).finally(() => setLoading(false));
@@ -38,9 +75,12 @@ export default function Companies() {
         const res = await createCompany(form);
         setCompanies([res.data, ...companies]);
       }
+      toast(editTarget ? 'Company updated!' : 'Company added!');
       closeModal();
     } catch (err) {
-      setError(err.response?.data?.error || 'Save failed');
+      const msg = err.response?.data?.error || 'Save failed';
+      setError(msg);
+      toast(msg, 'error');
     } finally {
       setSaving(false);
     }
@@ -50,16 +90,35 @@ export default function Companies() {
     if (!confirm('Delete this company?')) return;
     await deleteCompany(id);
     setCompanies(companies.filter((c) => c.id !== id));
+    if (openHistory === id) setOpenHistory(null);
   };
 
   const handleStatusChange = async (company, newStatus) => {
     const res = await updateCompany(company.id, { ...company, status: newStatus });
     setCompanies(companies.map((c) => c.id === company.id ? res.data : c));
+    setOpenHistory(null);
   };
 
-  const filtered = filter === 'all' ? companies : companies.filter((c) => c.status === filter);
+  const toggleHistory = (id) => setOpenHistory(openHistory === id ? null : id);
 
-  if (loading) return <div className="page-loading">Loading...</div>;
+  const handleResearch = async (company) => {
+    if (aiResearch[company.id]) { setAiResearch((p) => ({ ...p, [company.id]: null })); return; }
+    setAiResearching((p) => ({ ...p, [company.id]: true }));
+    try {
+      const res = await aiCompanyResearch({ company_name: company.name });
+      setAiResearch((p) => ({ ...p, [company.id]: res.data.result }));
+    } catch {
+      setAiResearch((p) => ({ ...p, [company.id]: 'Could not fetch info. Try again.' }));
+    } finally {
+      setAiResearching((p) => ({ ...p, [company.id]: false }));
+    }
+  };
+
+  const filtered = companies
+    .filter((c) => filter === 'all' || c.status === filter)
+    .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.address?.toLowerCase().includes(search.toLowerCase()));
+
+  if (loading) return <div className="page"><div className="page-header"><div className="skeleton" style={{height:'24px',width:'140px',borderRadius:'6px'}} /></div><SkeletonList rows={4} /></div>;
 
   return (
     <div className="page">
@@ -69,6 +128,16 @@ export default function Companies() {
           <p className="page-subtitle">Track your OJT application pipeline</p>
         </div>
         <button className="btn-primary" onClick={openAdd}>+ Add Company</button>
+      </div>
+
+      <div className="search-bar-wrap">
+        <input
+          className="search-bar"
+          placeholder="Search companies..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
       </div>
 
       <div className="filter-tabs">
@@ -106,6 +175,7 @@ export default function Companies() {
               <div className="company-meta">
                 {c.contact_person && <span>👤 {c.contact_person}</span>}
                 {c.email && <span>✉️ {c.email}</span>}
+                {c.phone && <span>📞 {c.phone}</span>}
                 {c.deadline && <span>⏰ Due {new Date(c.deadline).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}</span>}
               </div>
 
@@ -117,7 +187,7 @@ export default function Companies() {
                     <button
                       key={s}
                       className={`status-pill ${c.status === s ? 'active' : ''}`}
-                      style={c.status === s ? { background: STATUS_COLORS[s], color: '#fff' } : {}}
+                      style={c.status === s ? { background: STATUS_COLORS[s], color: '#fff', borderColor: STATUS_COLORS[s] } : {}}
                       onClick={() => handleStatusChange(c, s)}
                     >
                       {s}
@@ -125,10 +195,40 @@ export default function Companies() {
                   ))}
                 </div>
                 <div className="card-actions">
+                  <button
+                    className={`btn-ghost ${openHistory === c.id ? 'active-ghost' : ''}`}
+                    onClick={() => toggleHistory(c.id)}
+                    title="Status history"
+                  >
+                    <History size={14} style={{ marginRight: 4 }} />
+                    History
+                  </button>
+                  <button
+                    className={`btn-ghost ${aiResearch[c.id] ? 'active-ghost' : ''}`}
+                    onClick={() => handleResearch(c)}
+                    disabled={aiResearching[c.id]}
+                    title="AI research"
+                  >
+                    {aiResearching[c.id] ? '✦ ...' : '✦ Research'}
+                  </button>
                   <button className="btn-ghost" onClick={() => openEdit(c)}>Edit</button>
                   <button className="btn-ghost danger" onClick={() => handleDelete(c.id)}>Delete</button>
                 </div>
               </div>
+
+              {aiResearch[c.id] && (
+                <div className="ai-research-panel">
+                  <div className="ai-research-label">✦ AI Research</div>
+                  <p className="ai-research-text">{aiResearch[c.id]}</p>
+                </div>
+              )}
+
+              {openHistory === c.id && (
+                <div className="history-panel">
+                  <div className="history-panel-title">Status History</div>
+                  <HistoryPanel companyId={c.id} />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -171,9 +271,13 @@ export default function Companies() {
                   <input value={form.contact_person} onChange={set('contact_person')} />
                 </div>
                 <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" value={form.email} onChange={set('email')} />
+                  <label>Phone</label>
+                  <input type="tel" value={form.phone} onChange={set('phone')} placeholder="e.g. 09xx-xxx-xxxx" />
                 </div>
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" value={form.email} onChange={set('email')} />
               </div>
               <div className="form-row">
                 <div className="form-group">

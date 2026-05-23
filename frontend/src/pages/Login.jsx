@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GraduationCap } from 'lucide-react';
 import { login } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -9,6 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { signin } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +22,9 @@ export default function Login() {
       signin(res.data.token, res.data.user);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      const msg = err.response?.data?.error || 'Login failed';
+      setError(msg);
+      toast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -27,9 +32,15 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <div className="auth-bg-orbs" aria-hidden="true">
+        <div className="auth-orb auth-orb-1" />
+        <div className="auth-orb auth-orb-2" />
+      </div>
       <div className="auth-card">
         <div className="auth-header">
-          <span className="auth-logo">🎓</span>
+          <div className="auth-logo-wrap">
+            <GraduationCap size={28} strokeWidth={1.8} />
+          </div>
           <h1>OJT Buddy</h1>
           <p>Sign in to continue</p>
         </div>
@@ -55,7 +66,7 @@ export default function Login() {
               required
             />
           </div>
-          <button type="submit" className="btn-primary" disabled={loading}>
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>

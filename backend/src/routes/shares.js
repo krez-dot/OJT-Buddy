@@ -11,8 +11,9 @@ router.get('/', auth, async (req, res) => {
        FROM batch_shares bs
        JOIN users u ON bs.user_id=u.id
        JOIN companies c ON bs.company_id=c.id
-       WHERE bs.is_public=TRUE
+       WHERE bs.is_public=TRUE OR bs.user_id=$1
        ORDER BY bs.created_at DESC`,
+      [req.user.id]
     );
     res.json(result.rows);
   } catch (err) {
@@ -32,6 +33,29 @@ router.post('/', auth, async (req, res) => {
       [req.user.id, company_id, review, rating, is_public !== false]
     );
     res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  const { review, rating, is_public } = req.body;
+  try {
+    const result = await db.query(
+      'UPDATE batch_shares SET review=$1,rating=$2,is_public=$3 WHERE id=$4 AND user_id=$5 RETURNING *',
+      [review, rating, is_public, req.params.id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    await db.query('DELETE FROM batch_shares WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
