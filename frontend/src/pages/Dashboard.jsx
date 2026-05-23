@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useCountUp } from '../hooks/useCountUp';
+import { useDeadlineNotifications } from '../hooks/useDeadlineNotifications';
 import { getLogbookStats, getCompanies, getLogbook, getWeeklyHours } from '../api';
 import { SkeletonStat, SkeletonList } from '../components/Skeleton';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -50,6 +51,8 @@ export default function Dashboard() {
   const totalHours = parseFloat(stats?.total_hours || 0);
   const requiredHours = stats?.required_hours || user?.required_hours || 486;
   const pct = Math.min(100, Math.round((totalHours / requiredHours) * 100));
+
+  useDeadlineNotifications(companies);
 
   const animHours = useCountUp(totalHours);
   const animDays = useCountUp(stats?.total_days || 0);

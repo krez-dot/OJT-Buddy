@@ -881,36 +881,56 @@
 .mood-btn:hover { border-color: var(--accent); }
 
 /* ── Documents ── */
-.docs-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
-.company-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); height: fit-content; }
-.company-panel h3 { font-size: 11.5px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .5px; }
+.docs-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; }
+.company-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 16px; }
+.company-panel h3 { font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .5px; }
 .company-panel-list { display: flex; flex-direction: column; gap: 4px; }
 .company-panel-item {
-  width: 100%;
-  text-align: left;
-  padding: 9px 12px;
-  border-radius: 7px;
-  border: none;
+  width: 100%; text-align: left;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1px solid transparent;
   background: transparent;
-  display: flex; flex-direction: column; gap: 2px;
-  transition: background .15s;
+  display: flex; flex-direction: column; gap: 5px;
+  transition: background .15s, border-color .15s;
+  cursor: pointer;
 }
 .company-panel-item:hover { background: var(--bg); }
-.company-panel-item.active { background: var(--accent-light); }
-.cpanel-name { font-size: 13px; font-weight: 600; color: var(--text); }
-.cpanel-status { font-size: 11px; color: var(--text-2); text-transform: capitalize; }
+.company-panel-item.active { background: var(--accent-light); border-color: rgba(5,150,105,.25); }
+.cpanel-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.cpanel-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpanel-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; text-transform: capitalize; }
+.cpanel-mini-progress { display: flex; align-items: center; gap: 6px; }
+.cpanel-mini-bar { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.cpanel-mini-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s ease; }
+.cpanel-mini-label { font-size: 10px; color: var(--text-2); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+
 .docs-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
 .docs-panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.docs-panel-header h2 { font-size: 16px; font-weight: 700; }
-.docs-progress { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+.docs-panel-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.docs-progress-wrap { display: flex; flex-direction: column; gap: 4px; }
+.docs-progress-bar { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; width: 240px; }
+.docs-progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+.docs-progress-text { font-size: 11.5px; color: var(--text-2); }
+.docs-all-done { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #16a34a; border-radius: 8px; padding: 10px 14px; font-size: 13.5px; font-weight: 600; margin-bottom: 16px; }
+[data-theme="dark"] .docs-all-done { color: #4ade80; }
+
 .docs-list { display: flex; flex-direction: column; gap: 10px; }
-.doc-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; transition: border-color .15s; }
-.doc-item:hover { border-color: var(--accent); }
-.doc-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
-.doc-body { flex: 1; }
-.doc-name { font-size: 14px; font-weight: 600; }
-.doc-desc { font-size: 12px; color: var(--text-2); margin-top: 2px; margin-bottom: 6px; }
-.doc-notes-input { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; color: var(--text-2); }
+.doc-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 10px; transition: border-color .15s, box-shadow .15s;
+  position: relative; overflow: hidden;
+}
+.doc-item:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(5,150,105,.08); }
+.doc-item--submitted { background: rgba(34,197,94,.04); }
+.doc-status-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 10px 0 0 10px; }
+.doc-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.doc-body { flex: 1; min-width: 0; }
+.doc-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.doc-desc { font-size: 12px; color: var(--text-2); margin-bottom: 6px; line-height: 1.45; }
+.doc-submitted-date { font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.doc-notes-input { width: 100%; border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; color: var(--text-2); background: var(--bg); transition: border-color .15s; margin-top: 2px; }
+.doc-notes-input:focus { outline: none; border-color: var(--accent); }
 .doc-status-btns { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
 
 /* ── Interview Prep ── */
@@ -1350,6 +1370,67 @@
 .profile-form { display: flex; flex-direction: column; gap: 14px; }
 .form-success { background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid var(--success); color: #15803d; padding: 10px 14px; border-radius: 8px; font-size: 13px; }
 [data-theme="dark"] .form-success { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.2); color: #4ade80; }
+
+/* ── Calendar ── */
+.cal-layout { display: grid; grid-template-columns: 1fr 260px; gap: 20px; align-items: start; }
+.cal-main { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-nav-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; color: var(--text); cursor: pointer; display: flex; align-items: center; transition: background .15s; }
+.cal-nav-btn:hover { background: var(--bg); }
+.cal-month-label { font-size: 16px; font-weight: 700; }
+.cal-month-stats { font-size: 12px; color: var(--text-2); margin-bottom: 14px; display: flex; gap: 8px; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-day-header { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-2); padding: 4px 0 8px; text-transform: uppercase; letter-spacing: .4px; }
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  cursor: pointer; position: relative;
+  transition: background .12s, border-color .12s;
+  padding: 2px;
+}
+.cal-cell:hover { background: var(--bg); border-color: var(--border); }
+.cal-cell--empty { cursor: default; pointer-events: none; }
+.cal-cell--logged { background: rgba(5,150,105,.08); border-color: rgba(5,150,105,.2); }
+.cal-cell--logged:hover { background: rgba(5,150,105,.14); }
+.cal-cell--today .cal-day-num { background: var(--accent); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.cal-cell--selected { border-color: var(--accent) !important; background: var(--accent-light) !important; }
+.cal-cell--deadline { box-shadow: inset 0 -2px 0 #ef4444; }
+.cal-day-num { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1; }
+.cal-mood { font-size: 11px; line-height: 1; }
+.cal-hours-label { font-size: 9px; color: var(--accent); font-family: 'DM Mono', monospace; line-height: 1; }
+.cal-deadline-dot { position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: #ef4444; }
+
+.cal-legend { display: flex; gap: 16px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); }
+.cal-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.cal-legend-dot.logged { background: rgba(5,150,105,.2); border: 1px solid rgba(5,150,105,.4); }
+.cal-legend-dot.deadline { background: #fef2f2; border: 1px solid #ef4444; }
+.cal-legend-dot.today { background: var(--accent); border-radius: 50%; }
+
+.cal-detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); position: sticky; top: 16px; }
+.cal-detail-empty { text-align: center; color: var(--text-2); font-size: 13px; padding: 30px 0; }
+.cal-detail-date { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--accent); }
+.cal-entry-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.cal-entry-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+.cal-entry-hours { font-size: 13px; font-weight: 700; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 99px; }
+.cal-entry-location { font-size: 12px; color: var(--text-2); }
+.cal-entry-tasks { font-size: 13px; color: var(--text); line-height: 1.55; margin: 0; }
+.cal-detail-none { font-size: 13px; color: var(--text-2); font-style: italic; }
+.cal-deadlines { margin-top: 12px; }
+.cal-deadlines-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); margin-bottom: 8px; }
+.cal-deadline-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.cal-deadline-item:last-child { border-bottom: none; }
+.cal-deadline-name { font-size: 13px; font-weight: 600; }
+.cal-deadline-status { font-size: 11px; color: var(--text-2); text-transform: capitalize; }
+
+@media (max-width: 768px) {
+  .cal-layout { grid-template-columns: 1fr; }
+  .cal-detail { position: static; }
+}
 
 /* ── Mood Trend ── */
 .mood-trend { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 4px; }

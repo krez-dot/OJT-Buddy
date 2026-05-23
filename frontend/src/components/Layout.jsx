@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, BookOpen,
   FileText, Mic2, Globe, Settings,
-  ChevronLeft, ChevronRight, LogOut, Sun, Moon, GraduationCap, Menu,
+  ChevronLeft, ChevronRight, LogOut, Sun, Moon, GraduationCap, Menu, CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getLogbookStats } from '../api';
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/logbook',   label: 'Logbook',       Icon: BookOpen },
   { to: '/documents', label: 'Documents',     Icon: FileText },
   { to: '/interview', label: 'Interview Prep', Icon: Mic2 },
+  { to: '/calendar',  label: 'Calendar',      Icon: CalendarDays },
   { to: '/shares',    label: 'Batch Share',   Icon: Globe },
   { to: '/profile',   label: 'Profile',       Icon: Settings },
 ];

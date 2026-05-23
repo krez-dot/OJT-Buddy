@@ -20,6 +20,7 @@ export default function Logbook() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState({ entry_date: TODAY, location: '', tasks_done: '', mood: 'good', hours_rendered: 8 });
@@ -134,7 +135,9 @@ export default function Logbook() {
   const pct = Math.min(100, Math.round((totalHours / requiredHours) * 100));
 
   const months = ['all', ...new Set(entries.map((e) => e.entry_date.slice(0, 7)))].reverse();
-  const filtered = monthFilter === 'all' ? entries : entries.filter((e) => e.entry_date.startsWith(monthFilter));
+  const filtered = entries
+    .filter((e) => monthFilter === 'all' || e.entry_date.startsWith(monthFilter))
+    .filter((e) => !search || e.tasks_done?.toLowerCase().includes(search.toLowerCase()) || e.location?.toLowerCase().includes(search.toLowerCase()));
   const monthLabel = (m) => m === 'all' ? 'All' : new Date(m + '-01').toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
 
   return (
@@ -229,6 +232,13 @@ export default function Logbook() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {entries.length > 0 && (
+        <div className="search-bar-wrap">
+          <input className="search-bar" placeholder="Search entries..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
         </div>
       )}
 
