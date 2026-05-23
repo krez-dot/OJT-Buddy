@@ -100,6 +100,13 @@ CREATE TABLE IF NOT EXISTS company_status_history (
   changed_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_ai_memory (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  memory TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Default interview questions
 INSERT INTO interview_questions (question, sample_answer, category, is_default) VALUES
   ('Tell me about yourself.', 'Start with your name, course, year, and key skills. Mention a notable project briefly.', 'General', TRUE),

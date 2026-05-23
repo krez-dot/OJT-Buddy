@@ -1,6 +1,7 @@
 const express = require('express');
 const Groq = require('groq-sdk');
 const auth = require('../middleware/auth');
+const db = require('../db');
 
 const router = express.Router();
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -84,13 +85,48 @@ router.post('/company-research', auth, async (req, res) => {
   }
 });
 
+const extractMemory = async (userId, messages) => {
+  try {
+    const convo = messages
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content)
+      .join('\n');
+
+    const existing = await db.query('SELECT memory FROM user_ai_memory WHERE user_id=$1', [userId]);
+    const prev = existing.rows[0]?.memory || '';
+
+    const extracted = await ask(
+      `You are extracting a personal memory profile for an AI assistant.
+       Given what the user said in chat, extract and update key facts about them.
+       Keep it brief (under 120 words). Include things like: course, target companies, OJT status, stress level patterns, preferences, goals, struggles.
+       If previous memory exists, merge and update it — don't repeat info.
+       Return ONLY plain text, no labels, no JSON.
+       Previous memory: ${prev || 'none'}`,
+      `User messages:\n${convo}`,
+      200
+    );
+
+    await db.query(
+      `INSERT INTO user_ai_memory (user_id, memory, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET memory=$2, updated_at=NOW()`,
+      [userId, extracted]
+    );
+  } catch {
+    // silently fail — memory extraction is best-effort
+  }
+};
+
 // POST /api/ai/chat
 router.post('/chat', auth, async (req, res) => {
   const { messages } = req.body;
   if (!messages?.length) return res.status(400).json({ error: 'messages are required' });
 
   try {
-    const history = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
+    const memRow = await db.query('SELECT memory FROM user_ai_memory WHERE user_id=$1', [req.user.id]);
+    const memory = memRow.rows[0]?.memory || '';
+
+    const history = messages.slice(-12).map((m) => ({ role: m.role, content: m.content }));
     const result = await groq.chat.completions.create({
       model: MODEL,
       temperature: 0.7,
@@ -100,14 +136,23 @@ router.post('/chat', auth, async (req, res) => {
           role: 'system',
           content: `You are OJT Buddy AI — a warm, supportive assistant for Filipino IT students doing their On-the-Job Training (OJT).
 You help with: finding companies, writing logbook entries, interview prep, document requirements, and OJT advice.
-You also provide emotional support. If the student says they're stressed, burned out, or struggling — lead with empathy and encouragement FIRST, then offer practical tips. Cheer them up genuinely. You know OJT is hard and stressful, especially for Filipino students balancing school and work.
-Tone: friendly, casual, like a supportive kuya/ate who's been through OJT. Use "ka" or Filipino casual phrases occasionally but keep it mostly English.
-Keep responses under 160 words unless the user asks for more detail. Be warm, real, never robotic.`,
+You also provide emotional support. If the student says they're stressed, burned out, or struggling — lead with empathy and encouragement FIRST, then offer practical tips. Cheer them up genuinely. You know OJT is hard and stressful.
+Tone: friendly, casual, like a supportive friend. Keep it fully in English — no Filipino words or phrases.
+Keep responses under 160 words unless asked for more. Be warm, real, never robotic.
+${memory ? `\nWhat you already know about this student:\n${memory}` : ''}`,
         },
         ...history,
       ],
     });
-    res.json({ reply: result.choices[0].message.content.trim() });
+
+    const reply = result.choices[0].message.content.trim();
+    res.json({ reply });
+
+    // Trigger memory extraction every 5 user messages in the background
+    const userMsgCount = messages.filter((m) => m.role === 'user').length;
+    if (userMsgCount > 0 && userMsgCount % 5 === 0) {
+      extractMemory(req.user.id, messages);
+    }
   } catch (err) {
     res.status(500).json({ error: 'AI request failed', detail: err.message });
   }
