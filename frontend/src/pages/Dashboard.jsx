@@ -8,7 +8,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 
 const STATUS_LABELS = { wishlist: 'Wishlist', applied: 'Applied', interview: 'Interview', accepted: 'Accepted', rejected: 'Rejected' };
 const STATUS_COLORS = { wishlist: '#94a3b8', applied: '#3b82f6', interview: '#f59e0b', accepted: '#22c55e', rejected: '#ef4444' };
-const MOOD_EMOJI = { great: '😄', good: '😊', okay: '😐', tired: '😴', rough: '😣' };
+const MOOD_EMOJI  = { great: '😄', good: '😊', okay: '😐', tired: '😴', rough: '😣' };
+const MOOD_COLOR  = { great: '#22c55e', good: '#3b82f6', okay: '#f59e0b', tired: '#94a3b8', rough: '#ef4444' };
 
 const QUICK_ACTIONS = [
   { label: 'Log Today', sub: 'Record your hours', icon: '📓', to: '/logbook' },
@@ -211,6 +212,48 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Mood Trend */}
+      {recentEntries.length > 0 && (
+        <div className="card" style={{ marginBottom: '20px' }}>
+          <div className="card-title">Mood Trend</div>
+          <div className="mood-trend">
+            {[...recentEntries].reverse().map((e) => (
+              <div key={e.id} className="mood-trend-item" title={`${new Date(e.entry_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} — ${e.mood}`}>
+                <div className="mood-trend-dot" style={{ background: MOOD_COLOR[e.mood] || '#94a3b8' }} />
+                <span className="mood-trend-emoji">{MOOD_EMOJI[e.mood] || '❓'}</span>
+                <span className="mood-trend-date">{new Date(e.entry_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Deadlines */}
+      {(() => {
+        const now = new Date();
+        const soon = companies
+          .filter((c) => c.deadline && c.status !== 'accepted' && c.status !== 'rejected')
+          .map((c) => ({ ...c, daysLeft: Math.ceil((new Date(c.deadline) - now) / 86400000) }))
+          .filter((c) => c.daysLeft >= 0 && c.daysLeft <= 14)
+          .sort((a, b) => a.daysLeft - b.daysLeft);
+        if (soon.length === 0) return null;
+        return (
+          <div className="card" style={{ marginBottom: '20px' }}>
+            <div className="card-title">⏰ Upcoming Deadlines</div>
+            <div className="deadlines-list">
+              {soon.map((c) => (
+                <div key={c.id} className="deadline-row">
+                  <span className="deadline-name">{c.name}</span>
+                  <span className={`deadline-badge ${c.daysLeft <= 3 ? 'urgent' : c.daysLeft <= 7 ? 'warning' : ''}`}>
+                    {c.daysLeft === 0 ? 'Today' : c.daysLeft === 1 ? 'Tomorrow' : `${c.daysLeft}d left`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

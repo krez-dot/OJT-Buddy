@@ -84,4 +84,55 @@ router.post('/company-research', auth, async (req, res) => {
   }
 });
 
+// POST /api/ai/suggest-companies
+router.post('/suggest-companies', auth, async (req, res) => {
+  const { course, skills, location } = req.body;
+  if (!course) return res.status(400).json({ error: 'course is required' });
+
+  try {
+    const text = await ask(
+      `You are helping a Filipino IT student find OJT companies.
+       Suggest 4 real, specific companies in the Philippines that are good OJT hosts for their course.
+       For each company include: name, a 1-sentence description of what they do, and why it's a good OJT fit.
+       Respond ONLY in this exact JSON array format (no markdown):
+       [{"name":"...","desc":"...","why":"..."},...]`,
+      `Course: ${course}
+       Skills/interests: ${skills || 'general IT'}
+       Location preference: ${location || 'Metro Manila'}`,
+      600
+    );
+    const json = JSON.parse(text.match(/\[[\s\S]*\]/)[0]);
+    res.json({ suggestions: json });
+  } catch (err) {
+    res.status(500).json({ error: 'AI request failed', detail: err.message });
+  }
+});
+
+// POST /api/ai/resume-summary
+router.post('/resume-summary', auth, async (req, res) => {
+  const { entries, company, course } = req.body;
+  if (!entries || entries.length === 0) return res.status(400).json({ error: 'entries are required' });
+
+  const entryText = entries
+    .slice(0, 20)
+    .map((e) => `${e.entry_date}: ${e.tasks_done || ''} (${e.hours_rendered}h at ${e.location || 'office'})`)
+    .join('\n');
+
+  try {
+    const text = await ask(
+      `You are helping a Filipino IT student write a resume summary of their OJT experience.
+       Based on their daily logbook entries, write a professional 3-4 sentence OJT experience summary
+       suitable for a resume. Write in third person. Be specific about skills and tasks demonstrated.
+       Return ONLY the summary text, no labels or extra formatting.`,
+      `Course: ${course || 'BSIT'}
+       Company: ${company || 'OJT company'}
+       Logbook entries:\n${entryText}`,
+      400
+    );
+    res.json({ summary: text });
+  } catch (err) {
+    res.status(500).json({ error: 'AI request failed', detail: err.message });
+  }
+});
+
 module.exports = router;

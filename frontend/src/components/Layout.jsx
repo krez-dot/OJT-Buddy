@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, BookOpen,
   FileText, Mic2, Globe, Settings,
-  ChevronLeft, ChevronRight, LogOut, Sun, Moon, GraduationCap,
+  ChevronLeft, ChevronRight, LogOut, Sun, Moon, GraduationCap, Menu,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getLogbookStats } from '../api';
@@ -51,9 +51,9 @@ export default function Layout({ children }) {
 
   return (
     <div className="layout">
-      <div className={`sidebar-overlay ${mobileOpen ? 'open' : ''}`} onClick={closeMobile} />
+      <div className={`sidebar-overlay ${mobileOpen ? 'visible' : ''}`} onClick={closeMobile} />
 
-      <aside className={`sidebar ${mobileOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
 
         {/* Brand */}
         <div className={`sidebar-brand ${collapsed ? 'sidebar-brand--collapsed' : ''}`}>
@@ -147,9 +147,11 @@ export default function Layout({ children }) {
           <div className="orb orb-2" />
           <div className="orb orb-3" />
         </div>
-        <div className="mobile-header">
-          <button className="menu-btn" onClick={() => setMobileOpen(true)}>☰</button>
-          <span className="brand-name">OJT Buddy</span>
+        <div className="mobile-topbar">
+          <button className="hamburger" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+            <Menu size={20} />
+          </button>
+          <span className="mobile-topbar-title">OJT Buddy</span>
         </div>
         {children}
       </div>

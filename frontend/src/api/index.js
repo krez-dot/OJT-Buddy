@@ -53,5 +53,7 @@ export const deleteShare = (id) => api.delete(`/shares/${id}`);
 export const aiInterviewFeedback = (data) => api.post('/ai/interview-feedback', data);
 export const aiLogbookHelper = (data) => api.post('/ai/logbook-helper', data);
 export const aiCompanyResearch = (data) => api.post('/ai/company-research', data);
+export const aiSuggestCompanies = (data) => api.post('/ai/suggest-companies', data);
+export const aiResumeSummary = (data) => api.post('/ai/resume-summary', data);
 
 export default api;

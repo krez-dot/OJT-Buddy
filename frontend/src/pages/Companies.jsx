@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getCompanies, createCompany, updateCompany, deleteCompany, getCompanyHistory, aiCompanyResearch } from '../api';
+import { getCompanies, createCompany, updateCompany, deleteCompany, getCompanyHistory, aiCompanyResearch, aiSuggestCompanies } from '../api';
 import { useToast } from '../context/ToastContext';
 import { SkeletonList } from '../components/Skeleton';
 import { History } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const STATUSES = ['wishlist', 'applied', 'interview', 'accepted', 'rejected'];
 const STATUS_COLORS = { wishlist: '#94a3b8', applied: '#3b82f6', interview: '#f59e0b', accepted: '#22c55e', rejected: '#ef4444' };
@@ -41,6 +42,7 @@ function HistoryPanel({ companyId }) {
 }
 
 export default function Companies() {
+  const { user } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -53,6 +55,8 @@ export default function Companies() {
   const [openHistory, setOpenHistory] = useState(null);
   const [aiResearch, setAiResearch] = useState({});
   const [aiResearching, setAiResearching] = useState({});
+  const [suggestions, setSuggestions] = useState(null);
+  const [suggesting, setSuggesting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -114,6 +118,26 @@ export default function Companies() {
     }
   };
 
+  const handleSuggest = async () => {
+    if (suggestions) { setSuggestions(null); return; }
+    setSuggesting(true);
+    try {
+      const res = await aiSuggestCompanies({ course: user?.course || 'BSIT', skills: '', location: '' });
+      setSuggestions(res.data.suggestions);
+    } catch {
+      toast('Could not fetch suggestions. Try again.', 'error');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const addSuggested = (s) => {
+    setForm({ ...EMPTY_FORM, name: s.name, notes: s.why });
+    setEditTarget(null);
+    setShowModal(true);
+    setError('');
+  };
+
   const filtered = companies
     .filter((c) => filter === 'all' || c.status === filter)
     .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.address?.toLowerCase().includes(search.toLowerCase()));
@@ -127,7 +151,12 @@ export default function Companies() {
           <h1>Companies</h1>
           <p className="page-subtitle">Track your OJT application pipeline</p>
         </div>
-        <button className="btn-primary" onClick={openAdd}>+ Add Company</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={`btn-ghost ${suggestions ? 'active-ghost' : ''}`} onClick={handleSuggest} disabled={suggesting}>
+            {suggesting ? '✦ Finding...' : '✦ Suggest'}
+          </button>
+          <button className="btn-primary" onClick={openAdd}>+ Add Company</button>
+        </div>
       </div>
 
       <div className="search-bar-wrap">
@@ -139,6 +168,21 @@ export default function Companies() {
         />
         {search && <button className="search-clear" onClick={() => setSearch('')}>×</button>}
       </div>
+
+      {suggestions && (
+        <div className="ai-suggest-panel">
+          <div className="ai-suggest-label">✦ AI Company Suggestions for {user?.course || 'BSIT'}</div>
+          <div className="ai-suggest-list">
+            {suggestions.map((s, i) => (
+              <div key={i} className="ai-suggest-item">
+                <div className="ai-suggest-name">{s.name}</div>
+                <div className="ai-suggest-desc">{s.desc} — {s.why}</div>
+                <button className="ai-suggest-add" onClick={() => addSuggested(s)}>+ Add to pipeline</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="filter-tabs">
         {['all', ...STATUSES].map((s) => (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { updateMe, getLogbookStats } from '../api';
+import { updateMe, getLogbookStats, getLogbook, aiResumeSummary } from '../api';
 import { useToast } from '../context/ToastContext';
 import { jsPDF } from 'jspdf';
 
@@ -136,6 +136,9 @@ export default function Profile() {
   const [generating, setGenerating] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [resumeSummary, setResumeSummary] = useState(null);
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const toast = useToast();
 
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value });
@@ -158,6 +161,31 @@ export default function Profile() {
     }
   };
 
+  const handleResumeSummary = async () => {
+    if (resumeSummary) { setResumeSummary(null); return; }
+    setResumeLoading(true);
+    try {
+      const [logRes, statsRes] = await Promise.all([getLogbook(), getLogbookStats()]);
+      const accepted = null;
+      const res = await aiResumeSummary({
+        entries: logRes.data,
+        course: user?.course,
+        company: accepted?.name,
+      });
+      setResumeSummary(res.data.summary);
+    } catch {
+      toast('Could not generate summary. Try again.', 'error');
+    } finally {
+      setResumeLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(resumeSummary);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleCertificate = async () => {
     setGenerating(true);
     try {
@@ -178,10 +206,23 @@ export default function Profile() {
           <h1>Profile & Settings</h1>
           <p className="page-subtitle">Update your OJT information</p>
         </div>
-        <button className="btn-primary" onClick={handleCertificate} disabled={generating}>
-          {generating ? 'Generating...' : '🎓 Download Certificate'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={`btn-ghost ${resumeSummary ? 'active-ghost' : ''}`} onClick={handleResumeSummary} disabled={resumeLoading}>
+            {resumeLoading ? '✦ Writing...' : '✦ Resume Summary'}
+          </button>
+          <button className="btn-primary" onClick={handleCertificate} disabled={generating}>
+            {generating ? 'Generating...' : '🎓 Download Certificate'}
+          </button>
+        </div>
       </div>
+
+      {resumeSummary && (
+        <div className="resume-summary-panel">
+          <div className="resume-summary-label">✦ AI Resume Summary — copy this into your resume</div>
+          <p className="resume-summary-text">{resumeSummary}</p>
+          <button className="resume-copy-btn" onClick={handleCopy}>{copied ? '✓ Copied!' : 'Copy to clipboard'}</button>
+        </div>
+      )}
 
       <div className="profile-layout">
         <div className="profile-avatar-card card">
