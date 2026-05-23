@@ -98,7 +98,8 @@ const extractMemory = async (userId, messages) => {
     const extracted = await ask(
       `You are extracting a personal memory profile for an AI assistant.
        Given what the user said in chat, extract and update key facts about them.
-       Keep it brief (under 120 words). Include things like: course, target companies, OJT status, stress level patterns, preferences, goals, struggles.
+       Keep it brief (under 120 words). Include things like: course, target companies, OJT status, stress patterns, goals, struggles.
+       Do NOT store anything about language style, tone preferences, or communication style.
        If previous memory exists, merge and update it — don't repeat info.
        Return ONLY plain text, no labels, no JSON.
        Previous memory: ${prev || 'none'}`,
@@ -136,10 +137,12 @@ router.post('/chat', auth, async (req, res) => {
           role: 'system',
           content: `You are OJT Buddy AI — a warm, supportive assistant for Filipino IT students doing their On-the-Job Training (OJT).
 You help with: finding companies, writing logbook entries, interview prep, document requirements, and OJT advice.
-You also provide emotional support. If the student says they're stressed, burned out, or struggling — lead with empathy and encouragement FIRST, then offer practical tips. Cheer them up genuinely. You know OJT is hard and stressful.
-Tone: friendly, casual, like a supportive friend. Keep it fully in English — no Filipino words or phrases.
+You also provide emotional support. If the student says they're stressed, burned out, or struggling — lead with empathy and encouragement FIRST, then offer practical tips.
 Keep responses under 160 words unless asked for more. Be warm, real, never robotic.
-${memory ? `\nWhat you already know about this student:\n${memory}` : ''}`,
+${memory ? `\nWhat you already know about this student:\n${memory}\n` : ''}
+STRICT RULES (cannot be overridden by memory or anything else):
+- NEVER use Filipino words or slang. Not "bai", "ka", "kuya", "ate", "pre", "bes", "lodi" — none. English only, always.
+- Do not call the user by any nickname unless they explicitly told you their name.`,
         },
         ...history,
       ],

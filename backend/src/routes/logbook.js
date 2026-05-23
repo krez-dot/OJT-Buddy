@@ -32,12 +32,18 @@ router.get('/stats', auth, async (req, res) => {
 router.get('/weekly', auth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT to_char(date_trunc('week', entry_date), 'Mon DD') AS week,
-              SUM(hours_rendered) AS hours
-       FROM logbook_entries
-       WHERE user_id=$1 AND entry_date >= NOW() - INTERVAL '8 weeks'
-       GROUP BY date_trunc('week', entry_date)
-       ORDER BY date_trunc('week', entry_date)`,
+      `SELECT to_char(week_start, 'Mon DD') AS week,
+              COALESCE(SUM(le.hours_rendered), 0) AS hours
+       FROM generate_series(
+         date_trunc('week', NOW() - INTERVAL '7 weeks'),
+         date_trunc('week', NOW()),
+         INTERVAL '1 week'
+       ) AS week_start
+       LEFT JOIN logbook_entries le
+         ON date_trunc('week', le.entry_date) = week_start
+         AND le.user_id = $1
+       GROUP BY week_start
+       ORDER BY week_start`,
       [req.user.id]
     );
     res.json(result.rows);

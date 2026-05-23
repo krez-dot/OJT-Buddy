@@ -13,7 +13,7 @@ const aiRoutes = require('./routes/ai');
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
