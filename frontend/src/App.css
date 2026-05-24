@@ -4697,6 +4697,10 @@
     padding: 10px 14px;
   }
 
+  .sidebar.mobile-open .nav-icon svg {
+    margin-left: -10px;
+  }
+
   .sidebar.mobile-open .signout-btn {
     display: flex !important;
   }
