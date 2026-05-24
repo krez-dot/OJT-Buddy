@@ -167,6 +167,8 @@ export default function Profile() {
   const [activeTheme, setActiveTheme] = useState(localStorage.getItem('ojt-theme') || 'emerald');
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [fontSize, setFontSize] = useState(localStorage.getItem('ojt-font-size') || 'normal');
+  const [highContrast, setHighContrast] = useState(localStorage.getItem('ojt-high-contrast') === 'true');
   const toast = useToast();
 
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value });
@@ -235,6 +237,27 @@ export default function Profile() {
     applyTheme(key);
     setActiveTheme(key);
     toast(`Theme changed to ${THEMES[key].label}!`);
+  };
+
+  const handleFontSize = (size) => {
+    setFontSize(size);
+    localStorage.setItem('ojt-font-size', size);
+    if (size === 'normal') {
+      document.documentElement.removeAttribute('data-font-size');
+    } else {
+      document.documentElement.setAttribute('data-font-size', size);
+    }
+  };
+
+  const handleHighContrast = () => {
+    const next = !highContrast;
+    setHighContrast(next);
+    localStorage.setItem('ojt-high-contrast', next);
+    if (next) {
+      document.documentElement.setAttribute('data-contrast', 'high');
+    } else {
+      document.documentElement.removeAttribute('data-contrast');
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -322,26 +345,26 @@ export default function Profile() {
             {error && <div className="form-error">{error}</div>}
             {success && <div className="form-success">Changes saved!</div>}
             <div className="form-group">
-              <label>Full Name</label>
-              <input value={form.name} onChange={set('name')} required />
+              <label htmlFor="pf-name">Full Name</label>
+              <input id="pf-name" value={form.name} onChange={set('name')} required />
             </div>
             <div className="form-group">
-              <label>Course</label>
-              <input value={form.course} onChange={set('course')} />
+              <label htmlFor="pf-course">Course</label>
+              <input id="pf-course" value={form.course} onChange={set('course')} />
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Batch</label>
-                <input value={form.batch} onChange={set('batch')} placeholder="e.g. 2025A" />
+                <label htmlFor="pf-batch">Batch</label>
+                <input id="pf-batch" value={form.batch} onChange={set('batch')} placeholder="e.g. 2025A" />
               </div>
               <div className="form-group">
-                <label>Required Hours</label>
-                <input type="number" value={form.required_hours} onChange={set('required_hours')} min={1} />
+                <label htmlFor="pf-hours">Required Hours</label>
+                <input id="pf-hours" type="number" value={form.required_hours} onChange={set('required_hours')} min={1} />
               </div>
             </div>
             <div className="form-group">
-              <label>OJT Start Date</label>
-              <input type="date" value={form.ojt_start_date} onChange={set('ojt_start_date')} />
+              <label htmlFor="pf-start">OJT Start Date</label>
+              <input id="pf-start" type="date" value={form.ojt_start_date} onChange={set('ojt_start_date')} />
             </div>
             <button type="submit" className="btn-primary" disabled={saving}>
               {saving ? 'Saving...' : 'Save Changes'}
@@ -357,17 +380,17 @@ export default function Profile() {
           {pwError && <div className="form-error">{pwError}</div>}
           {pwSuccess && <div className="form-success">Password changed successfully!</div>}
           <div className="form-group">
-            <label>Current Password</label>
-            <input type="password" value={pwForm.current_password} onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })} required />
+            <label htmlFor="pw-current">Current Password</label>
+            <input id="pw-current" type="password" value={pwForm.current_password} onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })} required />
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>New Password</label>
-              <input type="password" value={pwForm.new_password} onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })} required minLength={6} />
+              <label htmlFor="pw-new">New Password</label>
+              <input id="pw-new" type="password" value={pwForm.new_password} onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })} required minLength={6} />
             </div>
             <div className="form-group">
-              <label>Confirm New Password</label>
-              <input type="password" value={pwForm.confirm_password} onChange={(e) => setPwForm({ ...pwForm, confirm_password: e.target.value })} required />
+              <label htmlFor="pw-confirm">Confirm New Password</label>
+              <input id="pw-confirm" type="password" value={pwForm.confirm_password} onChange={(e) => setPwForm({ ...pwForm, confirm_password: e.target.value })} required />
             </div>
           </div>
           <button type="submit" className="btn-primary" disabled={pwSaving}>{pwSaving ? 'Changing...' : 'Change Password'}</button>
@@ -393,6 +416,39 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Accessibility */}
+      <div className="card" style={{ marginTop: '20px' }}>
+        <h2 className="card-title">Accessibility</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '18px' }}>Adjust the app to better suit your needs.</p>
+
+        <div className="a11y-section">
+          <div className="a11y-label">Text Size</div>
+          <div className="a11y-options">
+            {[{ key: 'normal', label: 'Normal' }, { key: 'large', label: 'Large' }, { key: 'xl', label: 'Extra Large' }].map(({ key, label }) => (
+              <button
+                key={key}
+                className={`a11y-size-btn ${fontSize === key ? 'active' : ''}`}
+                onClick={() => handleFontSize(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="a11y-section" style={{ marginTop: '16px' }}>
+          <div className="a11y-label">High Contrast</div>
+          <button
+            className={`a11y-toggle ${highContrast ? 'active' : ''}`}
+            onClick={handleHighContrast}
+            aria-pressed={highContrast}
+          >
+            <span className="a11y-toggle-thumb" />
+            <span className="a11y-toggle-label">{highContrast ? 'On' : 'Off'}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Danger Zone */}
       <div className="card danger-zone" style={{ marginTop: '20px' }}>
         <h2 className="card-title" style={{ color: 'var(--danger)' }}>Danger Zone</h2>
@@ -400,8 +456,9 @@ export default function Profile() {
           Permanently delete your account and all your data. This cannot be undone.
         </p>
         <div className="form-group">
-          <label>Type <strong>DELETE</strong> to confirm</label>
+          <label htmlFor="delete-confirm">Type <strong>DELETE</strong> to confirm</label>
           <input
+            id="delete-confirm"
             value={deleteConfirm}
             onChange={(e) => setDeleteConfirm(e.target.value)}
             placeholder="DELETE"

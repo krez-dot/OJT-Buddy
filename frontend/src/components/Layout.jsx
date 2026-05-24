@@ -61,14 +61,14 @@ export default function Layout({ children }) {
         {/* Brand */}
         <div className={`sidebar-brand ${collapsed && !mobileOpen ? 'sidebar-brand--collapsed' : ''}`}>
           {collapsed && !mobileOpen ? (
-            <button className="collapse-btn collapse-btn--center" onClick={() => setCollapsed(false)} title="Expand">
+            <button className="collapse-btn collapse-btn--center" onClick={() => setCollapsed(false)} title="Expand" aria-label="Expand sidebar">
               <ChevronRight size={17} />
             </button>
           ) : (
             <>
               <GraduationCap size={22} strokeWidth={1.8} className="brand-icon" />
               <span className="brand-name">OJT Buddy</span>
-              <button className="collapse-btn" onClick={() => setCollapsed(true)} title="Collapse">
+              <button className="collapse-btn" onClick={() => setCollapsed(true)} title="Collapse" aria-label="Collapse sidebar">
                 <ChevronLeft size={16} />
               </button>
             </>
@@ -116,10 +116,10 @@ export default function Layout({ children }) {
                 {user?.name?.[0]?.toUpperCase()}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-                <button className="theme-btn" onClick={() => setDark(d => !d)}>
+                <button className="theme-btn" onClick={() => setDark(d => !d)} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
                 </button>
-                <button className="theme-btn" onClick={handleSignout} title="Sign out">
+                <button className="theme-btn" onClick={handleSignout} title="Sign out" aria-label="Sign out">
                   <LogOut size={15} />
                 </button>
               </div>
@@ -135,7 +135,7 @@ export default function Layout({ children }) {
               </div>
               <div className="sidebar-footer-row">
                 <button className="signout-btn" onClick={handleSignout}>Sign out</button>
-                <button className="theme-btn" onClick={() => setDark(d => !d)}>
+                <button className="theme-btn" onClick={() => setDark(d => !d)} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
                   {dark ? <Sun size={15} /> : <Moon size={15} />}
                 </button>
               </div>

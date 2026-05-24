@@ -22,6 +22,15 @@ if (saved && THEMES[saved]) {
   document.documentElement.style.setProperty('--sidebar-active', t.accent);
 }
 
+const savedFontSize = localStorage.getItem('ojt-font-size');
+if (savedFontSize && savedFontSize !== 'normal') {
+  document.documentElement.setAttribute('data-font-size', savedFontSize);
+}
+
+if (localStorage.getItem('ojt-high-contrast') === 'true') {
+  document.documentElement.setAttribute('data-contrast', 'high');
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ToastProvider>
