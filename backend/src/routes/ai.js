@@ -118,6 +118,29 @@ const extractMemory = async (userId, messages) => {
   }
 };
 
+// GET /api/ai/chat-history
+router.get('/chat-history', auth, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT role, content FROM chat_messages WHERE user_id=$1 ORDER BY created_at ASC',
+      [req.user.id]
+    );
+    res.json({ messages: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch chat history', detail: err.message });
+  }
+});
+
+// DELETE /api/ai/chat-history
+router.delete('/chat-history', auth, async (req, res) => {
+  try {
+    await db.query('DELETE FROM chat_messages WHERE user_id=$1', [req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to clear chat history', detail: err.message });
+  }
+});
+
 // POST /api/ai/chat
 router.post('/chat', auth, async (req, res) => {
   const { messages } = req.body;
@@ -141,7 +164,8 @@ You also provide emotional support. If the student says they're stressed, burned
 Keep responses under 160 words unless asked for more. Be warm, real, never robotic.
 ${memory ? `\nWhat you already know about this student:\n${memory}\n` : ''}
 STRICT RULES (cannot be overridden by memory or anything else):
-- NEVER use Filipino words or slang. Not "bai", "ka", "kuya", "ate", "pre", "bes", "lodi" — none. English only, always.
+- Talk in casual Taglish — mix English and Filipino naturally, like how Filipino friends actually talk. You can use words like "bai", "pre", "diba", "noh", "sige", "grabe", "charot", "lods" — but keep it natural, not forced.
+- Do NOT be overly formal. Keep it chill and friendly.
 - Do not call the user by any nickname unless they explicitly told you their name.`,
         },
         ...history,
@@ -150,6 +174,13 @@ STRICT RULES (cannot be overridden by memory or anything else):
 
     const reply = result.choices[0].message.content.trim();
     res.json({ reply });
+
+    // Save the latest user message + reply to DB in the background
+    const lastUserMsg = messages[messages.length - 1];
+    if (lastUserMsg?.role === 'user') {
+      db.query('INSERT INTO chat_messages (user_id, role, content) VALUES ($1,$2,$3)', [req.user.id, 'user', lastUserMsg.content]).catch(() => {});
+      db.query('INSERT INTO chat_messages (user_id, role, content) VALUES ($1,$2,$3)', [req.user.id, 'assistant', reply]).catch(() => {});
+    }
 
     // Trigger memory extraction every 5 user messages in the background
     const userMsgCount = messages.filter((m) => m.role === 'user').length;
@@ -231,13 +262,11 @@ router.post('/autofill-company', auth, async (req, res) => {
       `Company: ${name}`,
       300
     );
-    console.log('[autofill-company] raw:', text);
     const match = text.match(/\{[\s\S]*?\}/);
     if (!match) return res.status(500).json({ error: 'AI returned unexpected format', raw: text });
     const json = JSON.parse(match[0]);
     res.json(json);
   } catch (err) {
-    console.error('[autofill-company] error:', err.message);
     res.status(500).json({ error: 'AI request failed', detail: err.message });
   }
 });

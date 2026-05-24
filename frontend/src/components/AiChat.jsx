@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { aiChat } from '../api';
-import { X, Send, Sparkles, ChevronDown } from 'lucide-react';
+import { aiChat, getChatHistory, clearChatHistory } from '../api';
+import { X, Send, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 
 const SUGGESTIONS = [
   '💼 Tips for my OJT interview?',
@@ -17,17 +17,30 @@ const STRESS_LEVELS = [
   { emoji: '😩', label: 'Burning',  value: 5, color: '#ef4444' },
 ];
 
+const WELCOME = { role: 'assistant', content: "Hey! I'm your OJT Buddy AI 👋 Ask me anything, or tell me how you're feeling today." };
+
 export default function AiChat() {
-  const [open, setOpen]       = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hey! I\'m your OJT Buddy AI 👋 Ask me anything, or tell me how you\'re feeling today.' },
-  ]);
-  const [input, setInput]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [unread, setUnread]   = useState(0);
-  const [stress, setStress]   = useState(null);
+  const [open, setOpen]         = useState(false);
+  const [messages, setMessages] = useState([WELCOME]);
+  const [input, setInput]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [unread, setUnread]     = useState(0);
+  const [stress, setStress]     = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
+
+  // Load chat history once on mount
+  useEffect(() => {
+    getChatHistory()
+      .then((res) => {
+        if (res.data.messages.length > 0) {
+          setMessages([WELCOME, ...res.data.messages]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setHistoryLoaded(true));
+  }, []);
 
   useEffect(() => {
     if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 150); }
@@ -36,6 +49,12 @@ export default function AiChat() {
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
+
+  const handleClear = async () => {
+    await clearChatHistory().catch(() => {});
+    setMessages([WELCOME]);
+    setStress(null);
+  };
 
   const send = async (text) => {
     const content = (text || input).trim();
@@ -97,6 +116,7 @@ export default function AiChat() {
               <span className="ai-chat-header-name">OJT Buddy AI</span>
               <span className="ai-chat-header-status">● Online</span>
             </div>
+            <button className="ai-chat-clear" onClick={handleClear} title="Clear chat history"><Trash2 size={13} /></button>
             <button className="ai-chat-close" onClick={() => setOpen(false)}><X size={15} /></button>
           </div>
 

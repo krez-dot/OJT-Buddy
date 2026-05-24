@@ -59,5 +59,7 @@ export const aiAutofillCompany = (data) => api.post('/ai/autofill-company', data
 export const aiSuggestCompanies = (data) => api.post('/ai/suggest-companies', data);
 export const aiResumeSummary = (data) => api.post('/ai/resume-summary', data);
 export const aiChat = (data) => api.post('/ai/chat', data);
+export const getChatHistory = () => api.get('/ai/chat-history');
+export const clearChatHistory = () => api.delete('/ai/chat-history');
 
 export default api;

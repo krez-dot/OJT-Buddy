@@ -219,7 +219,7 @@ export default function Logbook() {
                     {aiWriting ? '✦ Rewriting...' : '✦ Polish with AI'}
                   </button>
                 </div>
-                <textarea rows={4} value={form.tasks_done} onChange={set('tasks_done')} placeholder="Rough notes are fine — AI can polish them for you" />
+                <textarea rows={14} value={form.tasks_done} onChange={set('tasks_done')} placeholder="Rough notes are fine — AI can polish them for you" />
               </div>
               <div className="form-group">
                 <label>Mood</label>
