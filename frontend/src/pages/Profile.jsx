@@ -1,8 +1,28 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateMe, getLogbookStats, getLogbook, aiResumeSummary } from '../api';
+import { updateMe, getLogbookStats, getLogbook, aiResumeSummary, changePassword, deleteAccount } from '../api';
 import { useToast } from '../context/ToastContext';
 import { jsPDF } from 'jspdf';
+
+const THEMES = {
+  emerald: { label: 'Emerald', accent: '#059669', hover: '#047857', light: '#ecfdf5' },
+  blue:    { label: 'Blue',    accent: '#3b82f6', hover: '#2563eb', light: '#eff6ff' },
+  purple:  { label: 'Purple',  accent: '#8b5cf6', hover: '#7c3aed', light: '#f5f3ff' },
+  rose:    { label: 'Rose',    accent: '#f43f5e', hover: '#e11d48', light: '#fff1f2' },
+  orange:  { label: 'Orange',  accent: '#f97316', hover: '#ea580c', light: '#fff7ed' },
+  cyan:    { label: 'Cyan',    accent: '#06b6d4', hover: '#0891b2', light: '#ecfeff' },
+};
+
+function applyTheme(key) {
+  const t = THEMES[key];
+  if (!t) return;
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent-hover', t.hover);
+  document.documentElement.style.setProperty('--accent-light', t.light);
+  document.documentElement.style.setProperty('--sidebar-active', t.accent);
+  localStorage.setItem('ojt-theme', key);
+}
 
 function generateCertificate(user, stats) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -125,6 +145,7 @@ function generateCertificate(user, stats) {
 
 export default function Profile() {
   const { user, setUser } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: user?.name || '',
     course: user?.course || '',
@@ -139,6 +160,13 @@ export default function Profile() {
   const [resumeSummary, setResumeSummary] = useState(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [activeTheme, setActiveTheme] = useState(localStorage.getItem('ojt-theme') || 'emerald');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value });
@@ -184,6 +212,43 @@ export default function Profile() {
     navigator.clipboard.writeText(resumeSummary);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (pwForm.new_password !== pwForm.confirm_password) { setPwError('Passwords do not match'); return; }
+    setPwSaving(true); setPwError(''); setPwSuccess(false);
+    try {
+      await changePassword({ current_password: pwForm.current_password, new_password: pwForm.new_password });
+      setPwSuccess(true);
+      setPwForm({ current_password: '', new_password: '', confirm_password: '' });
+      toast('Password changed!');
+      setTimeout(() => setPwSuccess(false), 3000);
+    } catch (err) {
+      setPwError(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const handleThemeChange = (key) => {
+    applyTheme(key);
+    setActiveTheme(key);
+    toast(`Theme changed to ${THEMES[key].label}!`);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      localStorage.removeItem('token');
+      setUser(null);
+      navigate('/');
+    } catch {
+      toast('Failed to delete account', 'error');
+      setDeleting(false);
+    }
   };
 
   const handleCertificate = async () => {
@@ -283,6 +348,73 @@ export default function Profile() {
             </button>
           </form>
         </div>
+      </div>
+
+      {/* Password Change */}
+      <div className="card" style={{ marginTop: '20px' }}>
+        <h2 className="card-title">Change Password</h2>
+        <form onSubmit={handlePasswordChange} className="profile-form">
+          {pwError && <div className="form-error">{pwError}</div>}
+          {pwSuccess && <div className="form-success">Password changed successfully!</div>}
+          <div className="form-group">
+            <label>Current Password</label>
+            <input type="password" value={pwForm.current_password} onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })} required />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>New Password</label>
+              <input type="password" value={pwForm.new_password} onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })} required minLength={6} />
+            </div>
+            <div className="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" value={pwForm.confirm_password} onChange={(e) => setPwForm({ ...pwForm, confirm_password: e.target.value })} required />
+            </div>
+          </div>
+          <button type="submit" className="btn-primary" disabled={pwSaving}>{pwSaving ? 'Changing...' : 'Change Password'}</button>
+        </form>
+      </div>
+
+      {/* Theme Picker */}
+      <div className="card" style={{ marginTop: '20px' }}>
+        <h2 className="card-title">Accent Color</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>Personalize the app's color theme.</p>
+        <div className="theme-swatches">
+          {Object.entries(THEMES).map(([key, t]) => (
+            <button
+              key={key}
+              className={`theme-swatch ${activeTheme === key ? 'active' : ''}`}
+              style={{ background: t.accent }}
+              title={t.label}
+              onClick={() => handleThemeChange(key)}
+            >
+              {activeTheme === key && <span className="theme-check">✓</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="card danger-zone" style={{ marginTop: '20px' }}>
+        <h2 className="card-title" style={{ color: 'var(--danger)' }}>Danger Zone</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>
+          Permanently delete your account and all your data. This cannot be undone.
+        </p>
+        <div className="form-group">
+          <label>Type <strong>DELETE</strong> to confirm</label>
+          <input
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            placeholder="DELETE"
+            style={{ maxWidth: '240px' }}
+          />
+        </div>
+        <button
+          className="btn-danger"
+          onClick={handleDeleteAccount}
+          disabled={deleteConfirm !== 'DELETE' || deleting}
+        >
+          {deleting ? 'Deleting...' : 'Delete My Account'}
+        </button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, BookOpen,
   FileText, Mic2, Globe, Settings,
@@ -40,9 +40,10 @@ export default function Layout({ children }) {
     localStorage.setItem('sidebar-collapsed', collapsed);
   }, [collapsed]);
 
+  const location = useLocation();
   useEffect(() => {
     getLogbookStats().then(r => setStats(r.data)).catch(() => {});
-  }, []);
+  }, [location.pathname]);
 
   const handleSignout = () => { signout(); navigate('/login'); };
   const closeMobile = () => setMobileOpen(false);

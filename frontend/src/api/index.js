@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:5000/api' });
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api' });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -15,6 +15,8 @@ export const login = (data) => api.post('/auth/login', data);
 // User
 export const getMe = () => api.get('/users/me');
 export const updateMe = (data) => api.put('/users/me', data);
+export const changePassword = (data) => api.put('/users/me/password', data);
+export const deleteAccount = () => api.delete('/users/me');
 
 // Companies
 export const getCompanies = () => api.get('/companies');
@@ -53,6 +55,7 @@ export const deleteShare = (id) => api.delete(`/shares/${id}`);
 export const aiInterviewFeedback = (data) => api.post('/ai/interview-feedback', data);
 export const aiLogbookHelper = (data) => api.post('/ai/logbook-helper', data);
 export const aiCompanyResearch = (data) => api.post('/ai/company-research', data);
+export const aiAutofillCompany = (data) => api.post('/ai/autofill-company', data);
 export const aiSuggestCompanies = (data) => api.post('/ai/suggest-companies', data);
 export const aiResumeSummary = (data) => api.post('/ai/resume-summary', data);
 export const aiChat = (data) => api.post('/ai/chat', data);

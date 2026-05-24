@@ -49,8 +49,19 @@ export default function Logbook() {
     setShowForm(true); setError('');
   };
 
+  const validate = () => {
+    if (!form.entry_date) return 'Date is required';
+    const today = new Date().toISOString().slice(0, 10);
+    if (form.entry_date > today) return 'Entry date cannot be in the future';
+    const h = parseFloat(form.hours_rendered);
+    if (isNaN(h) || h < 0 || h > 24) return 'Hours must be between 0 and 24';
+    return null;
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
+    const validationErr = validate();
+    if (validationErr) { setError(validationErr); return; }
     setSaving(true); setError('');
     try {
       if (editTarget) {

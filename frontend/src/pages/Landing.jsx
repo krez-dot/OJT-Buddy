@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { GraduationCap, BookOpen, Building2, Mic2, FileText, Sparkles, ArrowRight } from 'lucide-react';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const FEATURES = [
   { icon: Building2,    title: 'Company Tracker',     desc: 'Track every application from wishlist to accepted. Never lose track of a deadline.' },
@@ -18,6 +19,12 @@ const STEPS = [
 ];
 
 export default function Landing() {
+  const featHeadRef   = useScrollReveal(null, 0.1);
+  const featGridRef   = useScrollReveal('.feature-card', 0.2);
+  const stepsHeadRef  = useScrollReveal(null, 0.1);
+  const stepsGridRef  = useScrollReveal('.step-card', 0.2);
+  const ctaRef        = useScrollReveal(null, 0.25);
+
   return (
     <div className="landing">
       {/* Background */}
@@ -72,12 +79,14 @@ export default function Landing() {
 
       {/* Features */}
       <section className="landing-section">
-        <div className="section-label">Features</div>
-        <h2 className="section-title">Everything you need for OJT</h2>
-        <p className="section-sub">No more spreadsheets. No more forgotten deadlines.</p>
-        <div className="features-grid">
-          {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="feature-card">
+        <div className="section-heading-wrap" ref={featHeadRef}>
+          <div className="section-label">Features</div>
+          <h2 className="section-title">Everything you need for OJT</h2>
+          <p className="section-sub">No more spreadsheets. No more forgotten deadlines.</p>
+        </div>
+        <div className="features-grid" ref={featGridRef}>
+          {FEATURES.map(({ icon: Icon, title, desc }, i) => (
+            <div key={title} className="feature-card" style={{ '--i': i }}>
               <div className="feature-icon">
                 <Icon size={20} strokeWidth={1.8} />
               </div>
@@ -90,11 +99,13 @@ export default function Landing() {
 
       {/* How it works */}
       <section className="landing-section">
-        <div className="section-label">How it works</div>
-        <h2 className="section-title">From day one to done</h2>
-        <div className="steps-grid">
-          {STEPS.map((s) => (
-            <div key={s.num} className="step-card">
+        <div className="section-heading-wrap" ref={stepsHeadRef}>
+          <div className="section-label">How it works</div>
+          <h2 className="section-title">From day one to done</h2>
+        </div>
+        <div className="steps-grid" ref={stepsGridRef}>
+          {STEPS.map((s, i) => (
+            <div key={s.num} className="step-card" style={{ '--i': i }}>
               <div className="step-num">{s.num}</div>
               <h3 className="step-title">{s.title}</h3>
               <p className="step-desc">{s.desc}</p>
@@ -104,7 +115,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="landing-cta-section">
+      <section className="landing-cta-section" ref={ctaRef}>
         <h2 className="cta-title">Ready to start your OJT journey?</h2>
         <p className="cta-sub">Free to use. No credit card required.</p>
         <Link to="/register" className="btn-primary cta-btn">

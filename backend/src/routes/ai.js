@@ -168,14 +168,16 @@ router.post('/suggest-companies', auth, async (req, res) => {
 
   try {
     const text = await ask(
-      `You are helping a Filipino IT student find OJT companies.
-       Suggest 4 real, specific companies in the Philippines that are good OJT hosts for their course.
-       For each company include: name, a 1-sentence description of what they do, and why it's a good OJT fit.
-       Respond ONLY in this exact JSON array format (no markdown):
+      `You are helping a Filipino IT student find OJT companies in their specific city or area.
+       The student has given you a location. You MUST suggest companies, offices, or organizations that have a physical presence in that exact city or nearby municipality — NOT national headquarters unless they have a branch there.
+       Good local options include: city/municipal/provincial government IT offices (MIS/DICT), rural banks, cooperatives, hospitals, schools, local BPOs, regional branches of telecoms, or any tech-related local business.
+       Do NOT suggest generic national companies unless they are known to have offices in that specific location.
+       For each, include the location-specific branch or office name if applicable.
+       Respond ONLY in this exact JSON array format (no markdown, no explanation):
        [{"name":"...","desc":"...","why":"..."},...]`,
       `Course: ${course}
        Skills/interests: ${skills || 'general IT'}
-       Location preference: ${location || 'Metro Manila'}`,
+       Location: ${location || 'Philippines'} — suggest companies specifically in or very near this location`,
       600
     );
     const json = JSON.parse(text.match(/\[[\s\S]*\]/)[0]);
@@ -208,6 +210,34 @@ router.post('/resume-summary', auth, async (req, res) => {
     );
     res.json({ summary: text });
   } catch (err) {
+    res.status(500).json({ error: 'AI request failed', detail: err.message });
+  }
+});
+
+// POST /api/ai/autofill-company
+router.post('/autofill-company', auth, async (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'name is required' });
+
+  try {
+    const text = await ask(
+      `You are helping a Filipino IT student fill in details about a company for their OJT application.
+       Respond ONLY with raw JSON — no markdown, no code block, no explanation.
+       Always fill "notes" with something useful even if you only have general knowledge about the type of organization.
+       {"address":"...","notes":"...","contact_person":""}
+       - address: the known address or at minimum the city/province (never leave blank if you can guess the city)
+       - notes: REQUIRED — 1-2 sentences on what the company/office does and why it is a good OJT fit for IT students. If it is a government office, mention the IT/MIS department specifically.
+       - contact_person: leave as empty string unless widely known`,
+      `Company: ${name}`,
+      300
+    );
+    console.log('[autofill-company] raw:', text);
+    const match = text.match(/\{[\s\S]*?\}/);
+    if (!match) return res.status(500).json({ error: 'AI returned unexpected format', raw: text });
+    const json = JSON.parse(match[0]);
+    res.json(json);
+  } catch (err) {
+    console.error('[autofill-company] error:', err.message);
     res.status(500).json({ error: 'AI request failed', detail: err.message });
   }
 });

@@ -16,9 +16,12 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 router.post('/', auth, async (req, res) => {
   const { name, address, contact_person, email, phone, status, priority, notes, applied_at, deadline } = req.body;
-  if (!name) return res.status(400).json({ error: 'Company name is required' });
+  if (!name?.trim()) return res.status(400).json({ error: 'Company name is required' });
+  if (email && !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Invalid email address' });
   try {
     const result = await db.query(
       'INSERT INTO companies (user_id,name,address,contact_person,email,phone,status,priority,notes,applied_at,deadline) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
@@ -40,6 +43,8 @@ router.post('/', auth, async (req, res) => {
 
 router.put('/:id', auth, async (req, res) => {
   const { name, address, contact_person, email, phone, status, priority, notes, applied_at, deadline, status_note } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Company name is required' });
+  if (email && !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Invalid email address' });
   try {
     const prev = await db.query('SELECT status FROM companies WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
     if (!prev.rows.length) return res.status(404).json({ error: 'Not found' });

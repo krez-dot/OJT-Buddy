@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCompanies, createCompany, updateCompany, deleteCompany, getCompanyHistory, aiCompanyResearch, aiSuggestCompanies } from '../api';
+import { getCompanies, createCompany, updateCompany, deleteCompany, getCompanyHistory, aiCompanyResearch, aiSuggestCompanies, aiAutofillCompany } from '../api';
 import { useToast } from '../context/ToastContext';
 import { SkeletonList } from '../components/Skeleton';
 import { History } from 'lucide-react';
@@ -11,6 +11,7 @@ const PRIORITIES = ['high', 'normal', 'low'];
 const PRIORITY_COLORS = { high: '#ef4444', normal: '#3b82f6', low: '#94a3b8' };
 
 const EMPTY_FORM = { name: '', address: '', contact_person: '', email: '', phone: '', status: 'wishlist', priority: 'normal', notes: '', applied_at: '', deadline: '' };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function HistoryPanel({ companyId }) {
   const [logs, setLogs] = useState(null);
@@ -57,6 +58,8 @@ export default function Companies() {
   const [aiResearching, setAiResearching] = useState({});
   const [suggestions, setSuggestions] = useState(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestLocation, setSuggestLocation] = useState('');
+  const [autofilling, setAutofilling] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -68,8 +71,16 @@ export default function Companies() {
   const closeModal = () => setShowModal(false);
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value });
 
+  const validate = () => {
+    if (!form.name?.trim()) return 'Company name is required';
+    if (form.email && !EMAIL_RE.test(form.email)) return 'Invalid email address';
+    return null;
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
+    const validationErr = validate();
+    if (validationErr) { setError(validationErr); return; }
     setSaving(true); setError('');
     try {
       if (editTarget) {
@@ -122,12 +133,31 @@ export default function Companies() {
     if (suggestions) { setSuggestions(null); return; }
     setSuggesting(true);
     try {
-      const res = await aiSuggestCompanies({ course: user?.course || 'BSIT', skills: '', location: '' });
+      const res = await aiSuggestCompanies({ course: user?.course || 'BSIT', skills: '', location: suggestLocation || 'Philippines' });
       setSuggestions(res.data.suggestions);
     } catch {
       toast('Could not fetch suggestions. Try again.', 'error');
     } finally {
       setSuggesting(false);
+    }
+  };
+
+  const handleAutofill = async () => {
+    if (!form.name?.trim()) return;
+    setAutofilling(true);
+    try {
+      const res = await aiAutofillCompany({ name: form.name });
+      setForm((f) => ({
+        ...f,
+        address: res.data.address || f.address,
+        notes: res.data.notes || f.notes,
+        contact_person: res.data.contact_person || f.contact_person,
+      }));
+      toast('Fields filled by AI!');
+    } catch {
+      toast('Could not autofill. Try again.', 'error');
+    } finally {
+      setAutofilling(false);
     }
   };
 
@@ -152,6 +182,12 @@ export default function Companies() {
           <p className="page-subtitle">Track your OJT application pipeline</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            className="suggest-location-input"
+            placeholder="City (e.g. Tarlac, Cebu...)"
+            value={suggestLocation}
+            onChange={(e) => setSuggestLocation(e.target.value)}
+          />
           <button className={`btn-ghost ${suggestions ? 'active-ghost' : ''}`} onClick={handleSuggest} disabled={suggesting}>
             {suggesting ? '✦ Finding...' : '✦ Suggest'}
           </button>
@@ -288,8 +324,19 @@ export default function Companies() {
             <form onSubmit={handleSave} className="modal-form">
               {error && <div className="form-error">{error}</div>}
               <div className="form-group">
-                <label>Company Name *</label>
-                <input value={form.name} onChange={set('name')} required />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                  <label style={{ margin: 0 }}>Company Name *</label>
+                  <button
+                    type="button"
+                    className="ai-inline-btn"
+                    onClick={handleAutofill}
+                    disabled={autofilling || !form.name?.trim()}
+                    title="Autofill details with AI"
+                  >
+                    {autofilling ? '✦ Filling...' : '✦ Autofill with AI'}
+                  </button>
+                </div>
+                <input value={form.name} onChange={set('name')} required placeholder="Type a company name, then hit Autofill" />
               </div>
               <div className="form-row">
                 <div className="form-group">

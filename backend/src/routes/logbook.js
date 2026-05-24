@@ -32,18 +32,17 @@ router.get('/stats', auth, async (req, res) => {
 router.get('/weekly', auth, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT to_char(week_start, 'Mon DD') AS week,
-              COALESCE(SUM(le.hours_rendered), 0) AS hours
+      `SELECT to_char(day, 'Mon DD') AS week,
+              COALESCE(le.hours_rendered, 0) AS hours
        FROM generate_series(
-         date_trunc('week', NOW() - INTERVAL '7 weeks'),
-         date_trunc('week', NOW()),
-         INTERVAL '1 week'
-       ) AS week_start
+         (NOW() - INTERVAL '13 days')::date,
+         NOW()::date,
+         INTERVAL '1 day'
+       ) AS day
        LEFT JOIN logbook_entries le
-         ON date_trunc('week', le.entry_date) = week_start
+         ON le.entry_date::date = day::date
          AND le.user_id = $1
-       GROUP BY week_start
-       ORDER BY week_start`,
+       ORDER BY day`,
       [req.user.id]
     );
     res.json(result.rows);
@@ -52,9 +51,19 @@ router.get('/weekly', auth, async (req, res) => {
   }
 });
 
+const validateEntry = (entry_date, hours_rendered) => {
+  if (!entry_date) return 'entry_date is required';
+  const today = new Date().toISOString().slice(0, 10);
+  if (entry_date > today) return 'Entry date cannot be in the future';
+  const h = parseFloat(hours_rendered);
+  if (!isNaN(h) && (h < 0 || h > 24)) return 'Hours must be between 0 and 24';
+  return null;
+};
+
 router.post('/', auth, async (req, res) => {
   const { entry_date, location, tasks_done, mood, hours_rendered } = req.body;
-  if (!entry_date) return res.status(400).json({ error: 'entry_date is required' });
+  const err = validateEntry(entry_date, hours_rendered);
+  if (err) return res.status(400).json({ error: err });
   try {
     const result = await db.query(
       'INSERT INTO logbook_entries (user_id,entry_date,location,tasks_done,mood,hours_rendered) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (user_id,entry_date) DO UPDATE SET location=$3,tasks_done=$4,mood=$5,hours_rendered=$6 RETURNING *',
@@ -68,6 +77,8 @@ router.post('/', auth, async (req, res) => {
 
 router.put('/:id', auth, async (req, res) => {
   const { entry_date, location, tasks_done, mood, hours_rendered } = req.body;
+  const err = validateEntry(entry_date, hours_rendered);
+  if (err) return res.status(400).json({ error: err });
   try {
     const result = await db.query(
       'UPDATE logbook_entries SET entry_date=$1,location=$2,tasks_done=$3,mood=$4,hours_rendered=$5 WHERE id=$6 AND user_id=$7 RETURNING *',

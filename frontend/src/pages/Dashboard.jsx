@@ -155,13 +155,13 @@ export default function Dashboard() {
 
       {weeklyData.length > 0 && (
         <div className="card" style={{ marginBottom: '20px' }}>
-          <div className="card-title">Hours per Week</div>
+          <div className="card-title">Daily Hours (last 14 days)</div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={weeklyData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <XAxis dataKey="week" tick={{ fontSize: 10, fontFamily: 'DM Mono' }} />
               <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono' }} />
               <Tooltip formatter={(v) => [`${v}h`, 'Hours']} />
-              <Bar dataKey="hours" radius={[0, 0, 0, 0]}>
+              <Bar dataKey="hours" radius={[4, 4, 0, 0]} maxBarSize={40}>
                 {weeklyData.map((_, i) => <Cell key={i} fill="var(--accent)" />)}
               </Bar>
             </BarChart>
