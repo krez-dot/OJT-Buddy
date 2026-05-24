@@ -181,7 +181,7 @@ export default function Companies() {
           <h1>Companies</h1>
           <p className="page-subtitle">Track your OJT application pipeline</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="companies-header-actions" style={{ display: 'flex', gap: '8px' }}>
           <input
             className="suggest-location-input"
             placeholder="City (e.g. Tarlac, Cebu...)"

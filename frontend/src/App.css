@@ -3303,6 +3303,15 @@
     grid-template-columns: 1fr;
   }
 
+  .company-panel {
+    position: static;
+  }
+
+  .company-panel-list {
+    max-height: 160px;
+    overflow-y: auto;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -4865,6 +4874,36 @@
 
   .landing-nav-inner {
     padding: 0 16px;
+  }
+
+  /* Companies header actions */
+  .companies-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .companies-header-actions .suggest-location-input {
+    flex: 1;
+    min-width: 100px;
+    width: auto;
+  }
+
+  /* Calendar cells */
+  .cal-cell {
+    height: 72px;
+    padding: 4px 5px;
+  }
+
+  .cal-tasks-preview {
+    display: none;
+  }
+
+  .cal-hours-label {
+    font-size: 9px;
+  }
+
+  .cal-month-label {
+    font-size: 17px;
   }
 
   /* Mood trend */
