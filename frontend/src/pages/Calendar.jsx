@@ -114,10 +114,13 @@ export default function Calendar() {
                   className={`cal-cell ${entry ? 'cal-cell--logged' : ''} ${deadlines.length ? 'cal-cell--deadline' : ''} ${isToday ? 'cal-cell--today' : ''} ${isSelected ? 'cal-cell--selected' : ''}`}
                   onClick={() => setSelected(isSelected ? null : day)}
                 >
-                  <span className="cal-day-num">{day}</span>
-                  {entry && <span className="cal-mood">{MOOD_EMOJI[entry.mood] || '📓'}</span>}
+                  <div className="cal-cell-top">
+                    <span className="cal-day-num">{day}</span>
+                    {entry && <span className="cal-mood">{MOOD_EMOJI[entry.mood] || '📓'}</span>}
+                    {entry && <span className="cal-hours-label">{entry.hours_rendered}h</span>}
+                  </div>
                   {deadlines.length > 0 && <span className="cal-deadline-dot" />}
-                  {entry && <span className="cal-hours-label">{entry.hours_rendered}h</span>}
+                  {entry?.tasks_done && <span className="cal-tasks-preview">{entry.tasks_done}</span>}
                 </button>
               );
             })}

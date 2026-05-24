@@ -408,6 +408,7 @@ export default function Profile() {
             style={{ maxWidth: '240px' }}
           />
         </div>
+          <br></br>
         <button
           className="btn-danger"
           onClick={handleDeleteAccount}

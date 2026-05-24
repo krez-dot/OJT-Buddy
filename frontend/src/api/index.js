@@ -61,5 +61,6 @@ export const aiResumeSummary = (data) => api.post('/ai/resume-summary', data);
 export const aiChat = (data) => api.post('/ai/chat', data);
 export const getChatHistory = () => api.get('/ai/chat-history');
 export const clearChatHistory = () => api.delete('/ai/chat-history');
+export const aiQuestionTips = (data) => api.post('/ai/question-tips', data);
 
 export default api;

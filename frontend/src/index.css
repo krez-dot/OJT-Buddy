@@ -14,11 +14,33 @@
   --success: #22c55e;
   --warning: #f59e0b;
   --sidebar-bg: #111827;
-  --sidebar-text: rgba(156,213,188,.7);
+  --sidebar-text: rgba(255,255,255,.55);
   --sidebar-active: #059669;
   --radius: 10px;
   --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
   --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --accent-07: color-mix(in srgb, var(--accent) 7%, transparent);
+  --accent-08: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-10: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent-12: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-14: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-15: color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-16: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-18: color-mix(in srgb, var(--accent) 18%, transparent);
+  --accent-20: color-mix(in srgb, var(--accent) 20%, transparent);
+  --accent-22: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accent-25: color-mix(in srgb, var(--accent) 25%, transparent);
+  --accent-28: color-mix(in srgb, var(--accent) 28%, transparent);
+  --accent-30: color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-35: color-mix(in srgb, var(--accent) 35%, transparent);
+  --accent-40: color-mix(in srgb, var(--accent) 40%, transparent);
+  --accent-11: color-mix(in srgb, var(--accent) 11%, transparent);
+  --accent-13: color-mix(in srgb, var(--accent) 13%, transparent);
+  --accent-45: color-mix(in srgb, var(--accent) 45%, transparent);
+  --accent-50: color-mix(in srgb, var(--accent) 50%, transparent);
+  --accent-55: color-mix(in srgb, var(--accent) 55%, transparent);
+  --accent-60: color-mix(in srgb, var(--accent) 60%, transparent);
+  --accent-80: color-mix(in srgb, var(--accent) 80%, transparent);
 }
 
 [data-theme="dark"] {
@@ -31,8 +53,8 @@
   --accent: #34d399;
   --accent-hover: #059669;
   --accent-light: rgba(5,150,105,.12);
-  --sidebar-bg: #0a0f0c;
-  --sidebar-text: rgba(156,213,188,.6);
+  --sidebar-bg: #0a0a0a;
+  --sidebar-text: rgba(255,255,255,.5);
   --sidebar-active: #059669;
 }
 

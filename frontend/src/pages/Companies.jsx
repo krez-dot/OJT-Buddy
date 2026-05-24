@@ -382,7 +382,7 @@ export default function Companies() {
               </div>
               <div className="form-group">
                 <label>Notes</label>
-                <textarea value={form.notes} onChange={set('notes')} rows={3} />
+                <textarea value={form.notes} onChange={set('notes')} rows={7} />
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn-ghost" onClick={closeModal}>Cancel</button>

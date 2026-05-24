@@ -59,8 +59,8 @@ export default function Layout({ children }) {
       <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
 
         {/* Brand */}
-        <div className={`sidebar-brand ${collapsed ? 'sidebar-brand--collapsed' : ''}`}>
-          {collapsed ? (
+        <div className={`sidebar-brand ${collapsed && !mobileOpen ? 'sidebar-brand--collapsed' : ''}`}>
+          {collapsed && !mobileOpen ? (
             <button className="collapse-btn collapse-btn--center" onClick={() => setCollapsed(false)} title="Expand">
               <ChevronRight size={17} />
             </button>
@@ -86,13 +86,13 @@ export default function Layout({ children }) {
               data-label={label}
             >
               <span className="nav-icon"><Icon size={19} strokeWidth={1.8} /></span>
-              {!collapsed && <span className="nav-label">{label}</span>}
+              {(!collapsed || mobileOpen) && <span className="nav-label">{label}</span>}
             </NavLink>
           ))}
         </nav>
 
         {/* Progress widget */}
-        {!collapsed && (
+        {(!collapsed || mobileOpen) && (
           <div className="sidebar-widget">
             <div className="sw-date">{TODAY}</div>
             <div className="sw-title">OJT Progress</div>
@@ -109,8 +109,8 @@ export default function Layout({ children }) {
         )}
 
         {/* Footer */}
-        <div className={`sidebar-footer ${collapsed ? 'sidebar-footer--collapsed' : ''}`}>
-          {collapsed ? (
+        <div className={`sidebar-footer ${collapsed && !mobileOpen ? 'sidebar-footer--collapsed' : ''}`}>
+          {collapsed && !mobileOpen ? (
             <>
               <div className="user-avatar" style={{ margin: '0 auto 10px' }}>
                 {user?.name?.[0]?.toUpperCase()}

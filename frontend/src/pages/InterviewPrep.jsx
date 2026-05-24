@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getQuestions, updateConfidence, addQuestion, deleteQuestion, aiInterviewFeedback } from '../api';
+import { getQuestions, updateConfidence, addQuestion, deleteQuestion, aiInterviewFeedback, aiQuestionTips } from '../api';
 import { SkeletonList } from '../components/Skeleton';
 
 const CONFIDENCE_OPTIONS = [
   { value: 'not-practiced', label: 'Not Practiced', color: '#94a3b8', icon: '○' },
   { value: 'needs-practice', label: 'Needs Practice', color: '#f59e0b', icon: '◑' },
-  { value: 'confident', label: 'Confident', color: '#22c55e', icon: '●' },
+  { value: 'confident', label: 'Confident', color: 'var(--accent)', icon: '●' },
 ];
 
 export default function InterviewPrep() {
@@ -16,6 +16,7 @@ export default function InterviewPrep() {
   const [showAdd, setShowAdd] = useState(false);
   const [newQ, setNewQ] = useState({ question: '', sample_answer: '', category: 'Custom' });
   const [saving, setSaving] = useState(false);
+  const [generatingTip, setGeneratingTip] = useState(false);
   const [shuffleMode, setShuffleMode] = useState(false);
   const [shuffleIndex, setShuffleIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -50,6 +51,19 @@ export default function InterviewPrep() {
     if (!confirm('Delete this question?')) return;
     await deleteQuestion(id);
     setQuestions(questions.filter((q) => q.id !== id));
+  };
+
+  const handleGenerateTip = async () => {
+    if (!newQ.question?.trim()) return;
+    setGeneratingTip(true);
+    try {
+      const res = await aiQuestionTips({ question: newQ.question, category: newQ.category });
+      setNewQ((q) => ({ ...q, sample_answer: res.data.tip }));
+    } catch {
+      // silently fail
+    } finally {
+      setGeneratingTip(false);
+    }
   };
 
   const handleAddQuestion = async (e) => {
@@ -162,8 +176,13 @@ export default function InterviewPrep() {
               <input value={newQ.category} onChange={(e) => setNewQ({ ...newQ, category: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Sample Answer / Tips</label>
-              <textarea rows={3} value={newQ.sample_answer} onChange={(e) => setNewQ({ ...newQ, sample_answer: e.target.value })} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Sample Answer / Tips</label>
+                <button type="button" className="ai-inline-btn" onClick={handleGenerateTip} disabled={generatingTip || !newQ.question?.trim()}>
+                  {generatingTip ? '✦ Generating...' : '✦ Generate with AI'}
+                </button>
+              </div>
+              <textarea rows={3} value={newQ.sample_answer} onChange={(e) => setNewQ({ ...newQ, sample_answer: e.target.value })} placeholder="AI can generate this for you" />
             </div>
             <div className="modal-actions">
               <button type="button" className="btn-ghost" onClick={() => setShowAdd(false)}>Cancel</button>

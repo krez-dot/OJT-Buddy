@@ -271,4 +271,24 @@ router.post('/autofill-company', auth, async (req, res) => {
   }
 });
 
+// POST /api/ai/question-tips
+router.post('/question-tips', auth, async (req, res) => {
+  const { question, category } = req.body;
+  if (!question?.trim()) return res.status(400).json({ error: 'question is required' });
+
+  try {
+    const text = await ask(
+      `You are an OJT interview coach for Filipino IT students.
+       Given an interview question, write a short, practical answer tip (2-3 sentences).
+       Tell the student what to include in their answer and how to structure it.
+       Return ONLY the tip text, no labels, no formatting.`,
+      `Category: ${category || 'General'}\nQuestion: ${question}`,
+      200
+    );
+    res.json({ tip: text });
+  } catch (err) {
+    res.status(500).json({ error: 'AI request failed', detail: err.message });
+  }
+});
+
 module.exports = router;
