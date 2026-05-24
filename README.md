@@ -6,12 +6,15 @@ A full-stack internship management web app built for Filipino BSIT students. Tra
 
 ## Features
 
-- **Company Tracker** — 5-stage application pipeline (wishlist → applied → interview → accepted → rejected) with status history, priority levels, deadlines, and AI company research
+- **Company Tracker** — 5-stage application pipeline (wishlist → applied → interview → accepted → rejected) with status history, priority levels, deadlines, AI company research, AI autofill from company name, and location-aware AI suggestions
 - **Daily Logbook** — Log hours, tasks, location, and mood per day. Export a PDF report. AI can polish rough notes into professional entries
 - **Interview Prep** — Curated OJT interview questions with an AI coach that gives instant feedback on your practice answers
 - **Document Checklist** — Track required documents (NBI, MOA, endorsement letters, etc.) per company
 - **Batch Share** — Share your progress feed with classmates; view public or private batch updates
-- **Profile & Certificate** — Set required hours, track completion percentage, download a Certificate of Completion PDF when done
+- **Dashboard** — Daily hours chart (last 14 days), OJT journey progress tracker, company pipeline overview, upcoming deadlines, and mood trend
+- **Calendar** — Visual calendar view of logged days and company deadlines
+- **Profile & Settings** — Update OJT info, change password, pick accent color theme, generate AI resume summary, download a Certificate of Completion PDF
+- **AI Chat** — Floating assistant with conversation memory, aware of your OJT context
 
 ---
 
@@ -127,6 +130,8 @@ The app runs at `http://localhost:5173`.
 | `JWT_SECRET` | `backend/.env` | Secret for signing JWTs |
 | `GROQ_API_KEY` | `backend/.env` | Groq API key (get one free at console.groq.com) |
 | `PORT` | `backend/.env` | Backend port (default: 5000) |
+| `ALLOWED_ORIGIN` | `backend/.env` | Frontend URL for CORS in production |
+| `VITE_API_URL` | `frontend/.env` | Backend API base URL (production) |
 
 See `.env.example` for the template.
 
