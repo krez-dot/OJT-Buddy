@@ -169,7 +169,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid" style={{ marginBottom: '20px' }}>
         <div className="card">
           <div className="card-title">Company Pipeline</div>
           {companies.length === 0 ? (
